@@ -25,6 +25,9 @@ updates:
     groups:
       crowdsec:
         patterns: ["crowdsecurity/*"]
+    # GoAccess is deliberately kept on 1.9.4: do not propose newer versions.
+    ignore:
+      - dependency-name: "allinurl/goaccess"
 
   - package-ecosystem: github-actions
     directory: /
