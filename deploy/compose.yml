@@ -99,7 +99,7 @@ services:
   # pointing to http://goaccess:8080, restricted by an access list.
   goaccess:
     profiles: ["stats"]
-    image: allinurl/goaccess:1.9.4
+    image: allinurl/goaccess:1.12
     restart: unless-stopped
     entrypoint: ["/bin/sh", "-ec"]
     command:
