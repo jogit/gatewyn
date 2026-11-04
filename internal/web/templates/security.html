@@ -1,0 +1,27 @@
+{{define "content"}}<header class="top publish-head"><div><h1>Protection CrowdSec</h1>{{if .CS.Configured}}<p class="lead mono">{{.CS.URL}}</p>{{end}}</div>{{if .CS.Configured}}<div class="actions">{{if .CS.WebUIURL}}<a class="btn sm" href="{{.CS.WebUIURL}}" target="_blank" rel="noopener">Interface ↗</a>{{end}}<a class="btn sm" href="/security/crowdsec">Modifier</a>{{if .CS.Enabled}}<button type="button" class="btn sm" hx-post="/security/crowdsec/disable" hx-confirm="Désactiver CrowdSec ? Caddy ne bloquera plus les adresses qu'il signale." hx-target="#flash" hx-swap="innerHTML">Désactiver</button>{{else}}<button type="button" class="btn sm primary" hx-post="/security/crowdsec/enable" hx-target="#flash" hx-swap="innerHTML">Réactiver</button>{{end}}<button type="button" class="btn sm danger" hx-post="/security/crowdsec/remove" hx-confirm="Supprimer CrowdSec de Gatewyn ? La clé enregistrée sera effacée et Caddy cessera d'appliquer ses décisions. Le conteneur CrowdSec et ses données seront conservés." hx-target="#flash" hx-swap="innerHTML">Supprimer</button></div>{{end}}</header>
+<div id="flash" aria-live="polite">{{if .Flash}}<div class="note"><span class="pill ok">OK</span> {{.Flash}}</div>{{end}}</div>
+
+<section id="protection" class="security-section">
+{{if not .CS.Configured}}<div class="card cs-onboarding"><div class="cs-empty"><div class="cs-empty-copy"><span class="pill info">Protection optionnelle</span><h3>Bloquez les attaques avant qu'elles n'atteignent vos services.</h3><p>CrowdSec partage les adresses malveillantes connues. Gatewyn applique ses décisions dans Caddy.</p>{{if .CS.Detected}}<p class="muted">CrowdSec est déjà déployé avec Gatewyn : il ne reste qu'à le connecter.</p><div class="actions"><a class="btn primary" href="/security/crowdsec?appsec=1">Connecter CrowdSec <span aria-hidden="true">→</span></a></div>{{else}}<div class="actions"><a class="btn primary" href="/security/crowdsec/install">Installer CrowdSec <span aria-hidden="true">→</span></a><a class="btn" href="/security/crowdsec">J'utilise déjà CrowdSec</a></div>{{end}}</div><ol class="cs-chain" aria-label="Fonctionnement de la protection"><li><span>01</span><div><b>Détecter</b></div></li><li><span>02</span><div><b>Décider</b></div></li><li><span>03</span><div><b>Bloquer</b></div></li></ol></div></div>
+{{else if .CS.Enabled}}<div hx-get="/security/crowdsec/status" hx-trigger="load" hx-swap="innerHTML"><div class="status-loading"><span class="dot warn"></span><p>Vérification de CrowdSec…</p></div></div>
+{{else}}<div class="note"><span class="pill warn">Suspendu</span> Caddy ne bloque plus les adresses signalées par CrowdSec.</div>{{end}}</section>
+
+{{if and .CS.Configured .CS.Enabled}}<section class="detail-section"><h2>Sites protégés</h2>
+{{if .CS.Sites}}<div class="card tablecard"><table class="resp"><thead><tr><th>Site</th><th>Blocage des adresses</th>{{if .CS.AppSec}}<th>WAF</th>{{end}}</tr></thead><tbody>{{range .CS.Sites}}<tr><td><a href="/hosts/{{.ID}}/edit">{{.Domain}}</a></td><td data-l="Blocage des adresses"><span class="pill ok">Actif</span></td>{{if $.CS.AppSec}}<td data-l="WAF">{{if .WAF}}<span class="pill ok">Actif</span>{{else}}<a class="pill" href="/hosts/{{.ID}}/edit">Désactivé</a>{{end}}</td>{{end}}</tr>{{end}}</tbody></table></div>
+<p class="section-footnote">Le blocage des adresses s'applique à tous les services. Le WAF se règle service par service, dans le groupe Protection.</p>
+{{else}}<div class="note">Aucun service publié pour le moment.</div>{{end}}</section>{{end}}
+{{end}}
+
+{{define "csstatus"}}<div class="status-shell">
+<div class="status-grid" aria-label="État de la protection CrowdSec">
+<article class="status-cell {{if .EngineOK}}ok{{else}}err{{end}}"><span>CrowdSec</span><h3><span class="dot {{if .EngineOK}}ok{{else}}err{{end}}"></span>{{if .EngineOK}}Connecté{{else}}Injoignable{{end}}</h3>{{if not .EngineOK}}<p>{{.EngineMsg}}</p>{{end}}</article>
+<article class="status-cell {{if .CaddyOK}}ok{{else}}err{{end}}"><span>Caddy</span><h3><span class="dot {{if .CaddyOK}}ok{{else}}err{{end}}"></span>{{if .CaddyOK}}Blocage actif{{else}}Blocage inactif{{end}}</h3><p>{{.CaddyMsg}}</p></article>
+<article class="status-cell"><span>Décisions actives</span><strong>{{if .EngineOK}}{{.Total}}{{else}}—{{end}}</strong></article>
+<article class="status-cell {{if not .AppSecOn}}{{else if .AppSecOK}}ok{{else}}err{{end}}"><span>AppSec</span><h3>{{if not .AppSecOn}}Non configuré{{else if .AppSecOK}}Actif{{else}}Injoignable{{end}}</h3>{{if .AppSecOn}}<p>{{.AppSecMsg}}</p>{{end}}</article>
+</div>
+
+{{if .AppSecOn}}<section id="appsec" class="detail-section"><div class="security-title"><div><h2>AppSec</h2></div><span class="pill {{if .AppSecOK}}ok{{else}}err{{end}}">{{if .AppSecOK}}Actif{{else}}Injoignable{{end}}</span></div>
+{{if .WAFStats}}<div class="appsec-metrics"><div><span>Requêtes examinées</span><strong>{{.Processed}}</strong></div><div><span>Requêtes bloquées</span><strong>{{.Blocked}}</strong></div></div>{{else if .WAFStatsNo}}<div class="note mt">{{.WAFStatsNo}}</div>{{end}}
+{{if .WAFRules}}<h3 class="subsection-title">Règles déclenchées</h3><div class="card tablecard"><table class="resp"><thead><tr><th>Règle</th><th>Déclenchements</th></tr></thead><tbody>{{range .WAFRules}}<tr><td>{{.Label}}{{if .Raw}}<br><small class="muted mono">{{.Raw}}</small>{{end}}</td><td data-l="Déclenchements">{{.Hits}}</td></tr>{{end}}</tbody></table></div><p class="section-footnote">Compteurs depuis le dernier démarrage de CrowdSec.</p>{{end}}
+</section>{{end}}
+</div>{{end}}

@@ -1,0 +1,6 @@
+{{define "content"}}<header class="top install-head publish-head"><div><a class="back-link" href="/security/protection">← Protection CrowdSec</a><h1>Activer CrowdSec</h1></div></header>
+<div class="install-main compact">
+<section class="card activation-card"><h2>Activez CrowdSec</h2><p class="muted">Ajoutez la variable à votre fichier <code>.env</code> ou à votre stack, puis redéployez. CrowdSec crée lui-même la clé de Gatewyn.</p>
+<div class="command-list"><div class="command-row"><span>1</span><code id="crowdsec-profile">COMPOSE_PROFILES=crowdsec</code><button class="copy-btn inline" type="button" data-copy="#crowdsec-profile">Copier</button></div></div>
+<div class="activation-footer"><span class="muted">Une fois la stack redéployée, passez à la connexion.</span><a class="btn primary" href="/security/crowdsec?appsec=1">Continuer <span aria-hidden="true">→</span></a></div></section>
+<p class="muted"><small><a class="inline-link" href="/security/crowdsec">Utiliser un CrowdSec existant</a></small></p></div>{{end}}

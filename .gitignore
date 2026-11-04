@@ -1,0 +1,14 @@
+# Données et secrets d'une installation
+*.db
+*.db-*
+secret.key
+.env
+.env.*
+*.log
+
+# Construction et éditeur
+/gatewyn
+/bin/
+.vscode/
+.idea/
+.rollback/

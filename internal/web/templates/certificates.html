@@ -1,0 +1,7 @@
+{{define "content"}}<header class="top publish-head"><h1>Certificats</h1></header>
+{{if .Certs}}<div class="card tablecard"><table class="resp"><thead><tr><th>Domaine</th><th>Émetteur</th><th>Défi configuré</th><th>Émis le</th><th>Expire dans</th></tr></thead>
+<tbody>{{range .Certs}}<tr><td><b>{{.Domain}}</b>{{if .Covers}}<br><small class="muted">couvre aussi {{.Covers}}</small>{{end}}</td><td data-l="Émetteur">{{.Issuer}}</td><td data-l="Défi">{{.Challenge}}</td><td data-l="Émis le">{{.Issued}}</td><td data-l="Expire"><span class="pill {{.Class}}">{{.Left}}</span><br><small class="muted">le {{.ExpiresOn}}</small></td></tr>{{end}}</tbody></table></div>
+{{else if .CertsReadable}}<div class="card empty"><p><b>Aucun certificat pour l'instant.</b></p><p class="muted">Ils apparaissent après la première visite d'un domaine publié. Caddy les renouvelle tout seul.</p></div>
+{{else}}<div class="card"><p>Gatewyn ne peut pas lire les certificats de Caddy dans cette configuration.</p><p class="muted">Avec l'image Docker de Gatewyn, cette page fonctionne sans réglage.</p></div>{{end}}
+{{if .RootCert}}<div class="card mt"><div class="cardhead"><h2>Certificat racine de Caddy</h2><a class="btn sm" href="/certificates/root.crt">Télécharger</a></div>
+<p class="muted"><small>Pour les hôtes « Auto-signé » : installez-le sur chaque appareil (autorités racine de confiance) pour supprimer l'avertissement du navigateur.</small></p></div>{{end}}{{end}}

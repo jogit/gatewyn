@@ -1,0 +1,147 @@
+# Gatewyn, Caddy included: a single service, like NPM.
+#   docker compose -f deploy/compose.yml up -d
+# CrowdSec + AppSec, optional: add COMPOSE_PROFILES=crowdsec to your .env file
+# or to the variables of your stack manager.
+# GoAccess (statistics), optional: COMPOSE_PROFILES=stats (or crowdsec,stats). The access log is
+# on by default (Settings). The report is on port 8091.
+# Then open http://<server address>:8088 and create the administrator account right away.
+# Ports 8088, 8090 and 8091 must never be exposed to the Internet (firewall).
+name: gatewyn
+services:
+  gatewyn:
+    image: ghcr.io/jogit/gatewyn:1.0.0
+    restart: unless-stopped
+    ports:
+      - "8088:8080" # administration interface: private network only
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    # Lets Caddy's unprivileged user listen on ports 80 and 443.
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: 0
+    volumes:
+      - gatewyn_data:/data
+      # Caddy's access log lives in its own volume, so CrowdSec and GoAccess can read it
+      # without seeing the database or the encryption key in /data.
+      - gatewyn_logs:/data/logs
+      # Key of the CrowdSec bouncer, created by CrowdSec itself (empty without the crowdsec profile).
+      - crowdsec_bouncer_key:/run/crowdsec-bouncer:ro
+    environment:
+      # Public address(es) of this machine, used to check the DNS of your domains.
+      GATEWYN_PUBLIC_IP: ${GATEWYN_PUBLIC_IP:-}
+      GATEWYN_CROWDSEC_KEY_FILE: /run/crowdsec-bouncer/key
+    # Caddy's admin API stays inside the container (127.0.0.1:2019).
+
+  crowdsec:
+    profiles: ["crowdsec"]
+    image: crowdsecurity/crowdsec:v1.8.2
+    restart: unless-stopped
+    environment:
+      COLLECTIONS: crowdsecurity/caddy crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules
+    # Before its normal start, CrowdSec creates two random secrets (shared through volumes, never
+    # displayed) and registers them itself: the password of its web UI (AGENT_USERNAME/AGENT_PASSWORD)
+    # and the key of Gatewyn's bouncer (BOUNCER_KEY_gatewyn). Nothing to copy by hand.
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        secret=/run/crowdsec-web-ui/lapi-password
+        if [ ! -s "$$secret" ]; then
+          umask 077
+          head -c 32 /dev/urandom | base64 | tr -d '\n' > "$$secret"
+        fi
+        chmod 0444 "$$secret"
+        key=/run/crowdsec-bouncer/key
+        if [ ! -s "$$key" ]; then
+          umask 077
+          head -c 32 /dev/urandom | base64 | tr -d '\n=+/' > "$$key"
+        fi
+        chmod 0444 "$$key"
+        export AGENT_USERNAME=crowdsec-web-ui AGENT_PASSWORD="$$(cat "$$secret")"
+        export BOUNCER_KEY_gatewyn="$$(cat "$$key")"
+        exec /bin/bash /docker_start.sh
+    volumes:
+      - crowdsec_config:/etc/crowdsec
+      - crowdsec_data:/var/lib/crowdsec/data
+      - crowdsec_web_ui_secret:/run/crowdsec-web-ui
+      - crowdsec_bouncer_key:/run/crowdsec-bouncer
+      - gatewyn_logs:/data/logs:ro # Caddy's access log, read to spot scans
+    configs:
+      - source: crowdsec_appsec
+        target: /etc/crowdsec/acquis.d/appsec.yaml
+      - source: crowdsec_caddy_log
+        target: /etc/crowdsec/acquis.d/caddy.yaml
+    healthcheck:
+      test: ["CMD", "cscli", "lapi", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  crowdsec-web-ui:
+    profiles: ["crowdsec"]
+    image: ghcr.io/theduffman85/crowdsec-web-ui:2026.11.3
+    restart: unless-stopped
+    depends_on:
+      crowdsec:
+        condition: service_healthy
+    ports:
+      - "8090:3000"
+    environment:
+      CONFIG_INSTANCE_LAPI_URL: http://crowdsec:8080
+      CONFIG_INSTANCE_LAPI_AUTH_USERNAME: crowdsec-web-ui
+      CONFIG_INSTANCE_LAPI_AUTH_PASSWORD_FILE: /run/crowdsec-web-ui/lapi-password
+      CONFIG_INSTANCE_METRICS_URL: http://crowdsec:6060/metrics
+    volumes:
+      - crowdsec_web_ui_data:/app/data
+      - crowdsec_web_ui_secret:/run/crowdsec-web-ui:ro
+
+  # GoAccess report of Caddy's access log (JSON, read-only), rebuilt every 5 minutes.
+  # Port 8091, private network only. To open it through Gatewyn, add a host
+  # pointing to http://goaccess:8080, restricted by an access list.
+  goaccess:
+    profiles: ["stats"]
+    image: allinurl/goaccess:1.9.4
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        mkdir -p /report
+        httpd -f -p 8080 -h /report &
+        until ls /data/logs/access*.log* >/dev/null 2>&1; do sleep 5; done
+        while true; do
+          for f in /data/logs/access*.log*; do
+            case "$$f" in *.gz) zcat "$$f" ;; *) cat "$$f" ;; esac
+          done | goaccess - --log-format=CADDY -o /report/next.html && mv /report/next.html /report/index.html
+          sleep 300
+        done
+    ports:
+      - "8091:8080"
+    tmpfs:
+      - /report
+    volumes:
+      - gatewyn_logs:/data/logs:ro
+
+volumes:
+  gatewyn_data:
+  gatewyn_logs:
+  crowdsec_config:
+  crowdsec_data:
+  crowdsec_web_ui_data:
+  crowdsec_web_ui_secret:
+  crowdsec_bouncer_key:
+
+configs:
+  crowdsec_caddy_log:
+    content: |
+      source: file
+      filenames:
+        - /data/logs/access*.log
+      labels:
+        type: caddy
+  crowdsec_appsec:
+    content: |
+      source: appsec
+      listen_addr: 0.0.0.0:7422
+      appsec_configs:
+        - crowdsecurity/appsec-default
+      labels:
+        type: appsec

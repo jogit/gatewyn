@@ -1,0 +1,6 @@
+docs
+scripts
+deploy
+*.db
+*.db-*
+.git

@@ -1,0 +1,4 @@
+{{define "content"}}<header class="top publish-head"><h1>Comptes DNS</h1><a class="btn primary" href="/certificates/dns/new">Nouveau compte</a></header>
+<div id="flash" aria-live="polite">{{if .Flash}}<div class="note"><span class="pill ok">OK</span> {{.Flash}}</div>{{end}}</div>
+<div class="card">{{if .DNS}}<div class="list">{{range .DNS}}<div class="row"><div class="grow"><b>{{.Name}}</b><br><small class="muted">{{.Provider}}</small></div><span class="pill">{{.Hosts}} hôte{{if gt .Hosts 1}}s{{end}}</span><a class="btn sm" href="/certificates/dns/{{.ID}}/edit">Modifier</a></div>{{end}}</div>
+{{else}}<p class="muted">Pour obtenir un certificat sans ouvrir le port 80, ou pour tout un domaine (*.example.com). Cloudflare, OVH, Gandi, Route 53 et d'autres.</p>{{end}}</div>{{end}}

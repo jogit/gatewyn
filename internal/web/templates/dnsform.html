@@ -1,0 +1,11 @@
+{{define "content"}}<header class="top publish-head"><div><a class="back-link" href="{{.ListPath}}">← Retour aux comptes</a><h1>{{.Heading}}</h1></div>{{if .Editing}}<div class="danger-zone"><button type="button" class="btn danger" hx-post="/certificates/dns/{{.EditID}}/delete" hx-confirm="Supprimer le compte « {{.Name}} » ?" hx-target="#flash" hx-swap="innerHTML">Supprimer</button></div>{{end}}</header>
+<div id="flash" aria-live="polite"></div>
+<div class="grid g2 start"><div class="card publish-main"><form method="post" action="{{.Action}}" class="form" autocomplete="off">
+{{if .Error}}<div class="note" role="alert"><span class="pill err">Erreur</span> {{.Error}}</div>{{end}}
+<label class="f">Nom<input class="t" name="name" value="{{.Name}}" placeholder="Mon compte OVH" required autofocus></label>
+{{if .Editing}}<input type="hidden" name="provider" value="{{.ProviderID}}">{{else}}<label class="f">Fournisseur<select class="t" name="provider" hx-get="/certificates/dns/fields" hx-target="#dns-fields" hx-swap="innerHTML">{{range .Providers}}<option value="{{.ID}}"{{if eq $.ProviderID .ID}} selected{{end}}>{{.Name}}</option>{{end}}</select></label>{{end}}
+<div id="dns-fields" class="form">{{template "fields" .DNSFields}}</div>
+<div class="actions"><button class="btn primary" type="submit">{{.Submit}}</button><a class="btn" href="{{.ListPath}}">Annuler</a></div></form>
+<p class="muted"><small>Identifiants chiffrés, jamais réaffichés. Donnez au jeton le minimum de droits : modifier les enregistrements DNS de la zone.</small></p></div></div>{{end}}
+
+{{define "fields"}}{{range .}}<label class="f">{{.Label}}{{if .Optional}} <span class="muted">(optionnel)</span>{{end}}<input class="t{{if not .Secret}} mono{{end}}" name="f_{{.Key}}" value="{{.Value}}" type="{{if .Secret}}password{{else}}text{{end}}" autocomplete="off" autocapitalize="none" spellcheck="false"{{if and (not .Optional) (not .Edit)}} required{{end}}{{if and .Secret .Edit}} placeholder="Inchangé (laisser vide)"{{end}}></label>{{end}}{{end}}

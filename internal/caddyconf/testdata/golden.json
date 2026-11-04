@@ -1,0 +1,9277 @@
+{
+ "configuration complète / auto-signe": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "lan.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.22:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "lan2.example.com",
+           "lan3.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.23:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / chemins": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "not": [
+           {
+            "client_ip": {
+             "ranges": [
+              "192.0.2.0/24"
+             ]
+            }
+           }
+          ],
+          "path": [
+           "/api/v2",
+           "/api/v2/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "403 Forbidden",
+          "handler": "static_response",
+          "status_code": 403
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "path": [
+           "/api/v2",
+           "/api/v2/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Frame-Options": [
+             "DENY"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.7:9000"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "path": [
+           "/public",
+           "/public/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Frame-Options": [
+             "DENY"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "not": [
+           {
+            "client_ip": {
+             "ranges": [
+              "192.0.2.0/24"
+             ]
+            }
+           }
+          ],
+          "path": [
+           "/static",
+           "/static/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "403 Forbidden",
+          "handler": "static_response",
+          "status_code": 403
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "path": [
+           "/static",
+           "/static/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Frame-Options": [
+             "DENY"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "not": [
+           {
+            "client_ip": {
+             "ranges": [
+              "198.51.100.0/24"
+             ]
+            }
+           }
+          ],
+          "path": [
+           "/admin",
+           "/admin/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "403 Forbidden",
+          "handler": "static_response",
+          "status_code": 403
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "path": [
+           "/admin",
+           "/admin/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Frame-Options": [
+             "DENY"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "not": [
+           {
+            "client_ip": {
+             "ranges": [
+              "192.0.2.0/24"
+             ]
+            }
+           }
+          ],
+          "path": [
+           "/api",
+           "/api/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "403 Forbidden",
+          "handler": "static_response",
+          "status_code": 403
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "path": [
+           "/api",
+           "/api/*"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Frame-Options": [
+             "DENY"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "handler": "rewrite",
+          "strip_path_prefix": "/api"
+         },
+         {
+          "handler": "reverse_proxy",
+          "transport": {
+           "protocol": "http",
+           "tls": {}
+          },
+          "upstreams": [
+           {
+            "dial": "192.0.2.6:8443"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ],
+          "not": [
+           {
+            "client_ip": {
+             "ranges": [
+              "192.0.2.0/24"
+             ]
+            }
+           }
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "403 Forbidden",
+          "handler": "static_response",
+          "status_code": 403
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Frame-Options": [
+             "DENY"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / defi dns": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "*.example.org"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "404 Not Found",
+          "handler": "static_response",
+          "status_code": 404
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "blog.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.22:80"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / desactive": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "on.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.10:80"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / erreur 404": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "gone.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Robots-Tag": [
+             "noindex"
+            ]
+           }
+          }
+         },
+         {
+          "body": "404 Not Found",
+          "handler": "static_response",
+          "status_code": 404
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / http seulement": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "secure.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.24:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / melange": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "a.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.1:80"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "b.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.2:80"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "n.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "404 Not Found",
+          "handler": "static_response",
+          "status_code": 404
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "r.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "static_response",
+          "headers": {
+           "Location": [
+            "https://x.example.org{http.request.uri}"
+           ]
+          },
+          "status_code": 301
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy acces": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "admin.example.com"
+          ],
+          "not": [
+           {
+            "client_ip": {
+             "ranges": [
+              "192.0.2.0/24",
+              "198.51.100.7"
+             ]
+            }
+           }
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "body": "403 Forbidden",
+          "handler": "static_response",
+          "status_code": 403
+         }
+        ],
+        "terminal": true
+       },
+       {
+        "match": [
+         {
+          "host": [
+           "admin.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.23:80"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy alias": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com",
+           "docs.example.com",
+           "*.wiki.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy crowdsec": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy h2c": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "grpc.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "transport": {
+           "protocol": "http",
+           "versions": [
+            "h2c"
+           ]
+          },
+          "upstreams": [
+           {
+            "dial": "192.0.2.31:50051"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy hsts simple": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "app.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "Strict-Transport-Security": [
+             "max-age=31536000"
+            ],
+            "X-Frame-Options": [
+             "DENY"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.22:3000"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy https": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "nas.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "transport": {
+           "protocol": "http",
+           "tls": {}
+          },
+          "upstreams": [
+           {
+            "dial": "192.0.2.30:443"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy options": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "app.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "Strict-Transport-Security": [
+             "max-age=31536000; includeSubDomains"
+            ],
+            "X-Frame-Options": [
+             "SAMEORIGIN"
+            ],
+            "X-Robots-Tag": [
+             "noindex"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "encode",
+          "encodings": {
+           "zstd": {},
+           "gzip": {}
+          },
+          "prefer": [
+           "zstd",
+           "gzip"
+          ]
+         },
+         {
+          "flush_interval": -1,
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.22:3000"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy simple": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy waf": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "wiki.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "crowdsec"
+         },
+         {
+          "handler": "appsec"
+         },
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "X-Robots-Tag": [
+             "noindex"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.21:8080"
+           }
+          ]
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / redirection permanente": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "old.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "static_response",
+          "headers": {
+           "Location": [
+            "https://new.example.org{http.request.uri}"
+           ]
+          },
+          "status_code": 301
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / redirection temporaire": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "old.example.com",
+           "older.example.com"
+          ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "headers",
+          "response": {
+           "set": {
+            "Strict-Transport-Security": [
+             "max-age=31536000"
+            ],
+            "X-Robots-Tag": [
+             "noindex"
+            ]
+           }
+          }
+         },
+         {
+          "handler": "static_response",
+          "headers": {
+           "Location": [
+            "https://new.example.org/"
+           ]
+          },
+          "status_code": 302
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / vide": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ]
+     }
+    }
+   }
+  }
+ },
+ "crowdsec / crowdsec appsec": {
+  "api_key": "cle-fictive",
+  "api_url": "http://crowdsec:8080",
+  "appsec_fail_open": true,
+  "appsec_url": "http://crowdsec:7422",
+  "enable_streaming": true,
+  "ticker_interval": "10s"
+ },
+ "crowdsec / tout": {
+  "api_key": "cle-fictive",
+  "api_url": "http://crowdsec:8080",
+  "enable_streaming": true,
+  "ticker_interval": "10s"
+ },
+ "journal / journal": {
+  "writer": {
+   "filename": "/data/logs/access.log",
+   "output": "file",
+   "roll": true,
+   "roll_keep": 1000,
+   "roll_keep_days": 30,
+   "roll_size_mb": 100
+  },
+  "encoder": {
+   "format": "json"
+  },
+  "include": [
+   "http.log.access.gatewyn_access"
+  ]
+ },
+ "journal / tout": {
+  "writer": {
+   "filename": "/tmp/a.log",
+   "output": "file",
+   "roll": true,
+   "roll_keep": 1000,
+   "roll_keep_days": 7,
+   "roll_size_mb": 100
+  },
+  "encoder": {
+   "format": "json"
+  },
+  "include": [
+   "http.log.access.gatewyn_access"
+  ]
+ },
+ "serveur HTTP / auto-signe": null,
+ "serveur HTTP / auto-signe / crowdsec appsec": null,
+ "serveur HTTP / auto-signe / journal": null,
+ "serveur HTTP / auto-signe / proxies": null,
+ "serveur HTTP / auto-signe / sans reglage": null,
+ "serveur HTTP / auto-signe / tout": null,
+ "serveur HTTP / chemins": null,
+ "serveur HTTP / chemins / crowdsec appsec": null,
+ "serveur HTTP / chemins / journal": null,
+ "serveur HTTP / chemins / proxies": null,
+ "serveur HTTP / chemins / sans reglage": null,
+ "serveur HTTP / chemins / tout": null,
+ "serveur HTTP / defi dns": null,
+ "serveur HTTP / defi dns / crowdsec appsec": null,
+ "serveur HTTP / defi dns / journal": null,
+ "serveur HTTP / defi dns / proxies": null,
+ "serveur HTTP / defi dns / sans reglage": null,
+ "serveur HTTP / defi dns / tout": null,
+ "serveur HTTP / desactive": null,
+ "serveur HTTP / desactive / crowdsec appsec": null,
+ "serveur HTTP / desactive / journal": null,
+ "serveur HTTP / desactive / proxies": null,
+ "serveur HTTP / desactive / sans reglage": null,
+ "serveur HTTP / desactive / tout": null,
+ "serveur HTTP / erreur 404": null,
+ "serveur HTTP / erreur 404 / crowdsec appsec": null,
+ "serveur HTTP / erreur 404 / journal": null,
+ "serveur HTTP / erreur 404 / proxies": null,
+ "serveur HTTP / erreur 404 / sans reglage": null,
+ "serveur HTTP / erreur 404 / tout": null,
+ "serveur HTTP / http seulement": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "plain.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTP / http seulement / crowdsec appsec": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "plain.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTP / http seulement / journal": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "plain.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTP / http seulement / proxies": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "plain.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTP / http seulement / sans reglage": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "plain.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTP / http seulement / tout": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "plain.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTP / melange": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "h.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.3:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTP / melange / crowdsec appsec": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "h.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.3:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTP / melange / journal": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "h.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.3:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTP / melange / proxies": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "h.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.3:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTP / melange / sans reglage": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "h.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.3:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTP / melange / tout": {
+  "listen": [
+   ":80"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "h.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.3:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTP / proxy acces": null,
+ "serveur HTTP / proxy acces / crowdsec appsec": null,
+ "serveur HTTP / proxy acces / journal": null,
+ "serveur HTTP / proxy acces / proxies": null,
+ "serveur HTTP / proxy acces / sans reglage": null,
+ "serveur HTTP / proxy acces / tout": null,
+ "serveur HTTP / proxy alias": null,
+ "serveur HTTP / proxy alias / crowdsec appsec": null,
+ "serveur HTTP / proxy alias / journal": null,
+ "serveur HTTP / proxy alias / proxies": null,
+ "serveur HTTP / proxy alias / sans reglage": null,
+ "serveur HTTP / proxy alias / tout": null,
+ "serveur HTTP / proxy crowdsec": null,
+ "serveur HTTP / proxy crowdsec / crowdsec appsec": null,
+ "serveur HTTP / proxy crowdsec / journal": null,
+ "serveur HTTP / proxy crowdsec / proxies": null,
+ "serveur HTTP / proxy crowdsec / sans reglage": null,
+ "serveur HTTP / proxy crowdsec / tout": null,
+ "serveur HTTP / proxy h2c": null,
+ "serveur HTTP / proxy h2c / crowdsec appsec": null,
+ "serveur HTTP / proxy h2c / journal": null,
+ "serveur HTTP / proxy h2c / proxies": null,
+ "serveur HTTP / proxy h2c / sans reglage": null,
+ "serveur HTTP / proxy h2c / tout": null,
+ "serveur HTTP / proxy hsts simple": null,
+ "serveur HTTP / proxy hsts simple / crowdsec appsec": null,
+ "serveur HTTP / proxy hsts simple / journal": null,
+ "serveur HTTP / proxy hsts simple / proxies": null,
+ "serveur HTTP / proxy hsts simple / sans reglage": null,
+ "serveur HTTP / proxy hsts simple / tout": null,
+ "serveur HTTP / proxy https": null,
+ "serveur HTTP / proxy https / crowdsec appsec": null,
+ "serveur HTTP / proxy https / journal": null,
+ "serveur HTTP / proxy https / proxies": null,
+ "serveur HTTP / proxy https / sans reglage": null,
+ "serveur HTTP / proxy https / tout": null,
+ "serveur HTTP / proxy options": null,
+ "serveur HTTP / proxy options / crowdsec appsec": null,
+ "serveur HTTP / proxy options / journal": null,
+ "serveur HTTP / proxy options / proxies": null,
+ "serveur HTTP / proxy options / sans reglage": null,
+ "serveur HTTP / proxy options / tout": null,
+ "serveur HTTP / proxy simple": null,
+ "serveur HTTP / proxy simple / crowdsec appsec": null,
+ "serveur HTTP / proxy simple / journal": null,
+ "serveur HTTP / proxy simple / proxies": null,
+ "serveur HTTP / proxy simple / sans reglage": null,
+ "serveur HTTP / proxy simple / tout": null,
+ "serveur HTTP / proxy waf": null,
+ "serveur HTTP / proxy waf / crowdsec appsec": null,
+ "serveur HTTP / proxy waf / journal": null,
+ "serveur HTTP / proxy waf / proxies": null,
+ "serveur HTTP / proxy waf / sans reglage": null,
+ "serveur HTTP / proxy waf / tout": null,
+ "serveur HTTP / redirection permanente": null,
+ "serveur HTTP / redirection permanente / crowdsec appsec": null,
+ "serveur HTTP / redirection permanente / journal": null,
+ "serveur HTTP / redirection permanente / proxies": null,
+ "serveur HTTP / redirection permanente / sans reglage": null,
+ "serveur HTTP / redirection permanente / tout": null,
+ "serveur HTTP / redirection temporaire": null,
+ "serveur HTTP / redirection temporaire / crowdsec appsec": null,
+ "serveur HTTP / redirection temporaire / journal": null,
+ "serveur HTTP / redirection temporaire / proxies": null,
+ "serveur HTTP / redirection temporaire / sans reglage": null,
+ "serveur HTTP / redirection temporaire / tout": null,
+ "serveur HTTP / vide": null,
+ "serveur HTTP / vide / crowdsec appsec": null,
+ "serveur HTTP / vide / journal": null,
+ "serveur HTTP / vide / proxies": null,
+ "serveur HTTP / vide / sans reglage": null,
+ "serveur HTTP / vide / tout": null,
+ "serveur HTTPS / auto-signe": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "lan.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "lan2.example.com",
+       "lan3.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / auto-signe / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "lan.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "lan2.example.com",
+       "lan3.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / auto-signe / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "lan.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "lan2.example.com",
+       "lan3.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / auto-signe / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "lan.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "lan2.example.com",
+       "lan3.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / auto-signe / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "lan.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "lan2.example.com",
+       "lan3.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / auto-signe / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "lan.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "lan2.example.com",
+       "lan3.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / chemins": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.7:9000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/public",
+       "/public/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "198.51.100.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "rewrite",
+      "strip_path_prefix": "/api"
+     },
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.6:8443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / chemins / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.7:9000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/public",
+       "/public/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "198.51.100.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "rewrite",
+      "strip_path_prefix": "/api"
+     },
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.6:8443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / chemins / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.7:9000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/public",
+       "/public/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "198.51.100.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "rewrite",
+      "strip_path_prefix": "/api"
+     },
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.6:8443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / chemins / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.7:9000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/public",
+       "/public/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "198.51.100.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "rewrite",
+      "strip_path_prefix": "/api"
+     },
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.6:8443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / chemins / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.7:9000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/public",
+       "/public/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "198.51.100.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "rewrite",
+      "strip_path_prefix": "/api"
+     },
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.6:8443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / chemins / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.7:9000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/public",
+       "/public/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/static",
+       "/static/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "198.51.100.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "path": [
+       "/api",
+       "/api/*"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "rewrite",
+      "strip_path_prefix": "/api"
+     },
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.6:8443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / defi dns": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "*.example.org"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "blog.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / defi dns / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "*.example.org"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "blog.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / defi dns / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "*.example.org"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "blog.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / defi dns / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "*.example.org"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "blog.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / defi dns / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "*.example.org"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "blog.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / defi dns / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "*.example.org"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "blog.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / desactive": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "on.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.10:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / desactive / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "on.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.10:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / desactive / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "on.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.10:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / desactive / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "on.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.10:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / desactive / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "on.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.10:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / desactive / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "on.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.10:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / erreur 404": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "gone.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / erreur 404 / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "gone.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / erreur 404 / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "gone.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / erreur 404 / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "gone.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / erreur 404 / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "gone.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / erreur 404 / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "gone.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / http seulement": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "secure.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.24:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / http seulement / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "secure.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.24:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / http seulement / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "secure.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.24:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / http seulement / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "secure.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.24:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / http seulement / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "secure.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.24:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / http seulement / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "secure.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.24:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / melange": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "a.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.1:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "b.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.2:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "n.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "r.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://x.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / melange / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "a.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.1:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "b.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.2:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "n.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "r.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://x.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / melange / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "a.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.1:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "b.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.2:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "n.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "r.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://x.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / melange / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "a.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.1:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "b.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.2:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "n.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "r.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://x.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / melange / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "a.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.1:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "b.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.2:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "n.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "r.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://x.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / melange / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "a.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.1:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "b.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.2:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "n.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "404 Not Found",
+      "handler": "static_response",
+      "status_code": 404
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "r.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://x.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy acces": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24",
+          "198.51.100.7"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy acces / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24",
+          "198.51.100.7"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy acces / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24",
+          "198.51.100.7"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy acces / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24",
+          "198.51.100.7"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy acces / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24",
+          "198.51.100.7"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy acces / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ],
+      "not": [
+       {
+        "client_ip": {
+         "ranges": [
+          "192.0.2.0/24",
+          "198.51.100.7"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "body": "403 Forbidden",
+      "handler": "static_response",
+      "status_code": 403
+     }
+    ],
+    "terminal": true
+   },
+   {
+    "match": [
+     {
+      "host": [
+       "admin.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.23:80"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy alias": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com",
+       "docs.example.com",
+       "*.wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy alias / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com",
+       "docs.example.com",
+       "*.wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy alias / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com",
+       "docs.example.com",
+       "*.wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy alias / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com",
+       "docs.example.com",
+       "*.wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy alias / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com",
+       "docs.example.com",
+       "*.wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy alias / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com",
+       "docs.example.com",
+       "*.wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy crowdsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy crowdsec / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy crowdsec / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy crowdsec / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy crowdsec / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy crowdsec / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy h2c": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "grpc.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "versions": [
+        "h2c"
+       ]
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy h2c / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "grpc.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "versions": [
+        "h2c"
+       ]
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy h2c / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "grpc.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "versions": [
+        "h2c"
+       ]
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy h2c / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "grpc.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "versions": [
+        "h2c"
+       ]
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy h2c / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "grpc.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "versions": [
+        "h2c"
+       ]
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy h2c / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "grpc.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "versions": [
+        "h2c"
+       ]
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy hsts simple": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy hsts simple / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy hsts simple / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy hsts simple / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy hsts simple / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy hsts simple / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Frame-Options": [
+         "DENY"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy https": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy https / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy https / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy https / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy https / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy https / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      },
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy options": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000; includeSubDomains"
+        ],
+        "X-Frame-Options": [
+         "SAMEORIGIN"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "flush_interval": -1,
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy options / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000; includeSubDomains"
+        ],
+        "X-Frame-Options": [
+         "SAMEORIGIN"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "flush_interval": -1,
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy options / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000; includeSubDomains"
+        ],
+        "X-Frame-Options": [
+         "SAMEORIGIN"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "flush_interval": -1,
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy options / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000; includeSubDomains"
+        ],
+        "X-Frame-Options": [
+         "SAMEORIGIN"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "flush_interval": -1,
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy options / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000; includeSubDomains"
+        ],
+        "X-Frame-Options": [
+         "SAMEORIGIN"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "flush_interval": -1,
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy options / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "app.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000; includeSubDomains"
+        ],
+        "X-Frame-Options": [
+         "SAMEORIGIN"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "encode",
+      "encodings": {
+       "zstd": {},
+       "gzip": {}
+      },
+      "prefer": [
+       "zstd",
+       "gzip"
+      ]
+     },
+     {
+      "flush_interval": -1,
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.22:3000"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy simple": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy simple / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy simple / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy simple / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy simple / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy simple / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy waf": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "appsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy waf / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "appsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy waf / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "appsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy waf / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "appsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy waf / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "appsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy waf / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "wiki.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "crowdsec"
+     },
+     {
+      "handler": "appsec"
+     },
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.21:8080"
+       }
+      ]
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / redirection permanente": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / redirection permanente / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / redirection permanente / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / redirection permanente / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / redirection permanente / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / redirection permanente / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org{http.request.uri}"
+       ]
+      },
+      "status_code": 301
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / redirection temporaire": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com",
+       "older.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org/"
+       ]
+      },
+      "status_code": 302
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / redirection temporaire / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com",
+       "older.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org/"
+       ]
+      },
+      "status_code": 302
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / redirection temporaire / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com",
+       "older.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org/"
+       ]
+      },
+      "status_code": 302
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / redirection temporaire / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com",
+       "older.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org/"
+       ]
+      },
+      "status_code": 302
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / redirection temporaire / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com",
+       "older.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org/"
+       ]
+      },
+      "status_code": 302
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / redirection temporaire / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "old.example.com",
+       "older.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "headers",
+      "response": {
+       "set": {
+        "Strict-Transport-Security": [
+         "max-age=31536000"
+        ],
+        "X-Robots-Tag": [
+         "noindex"
+        ]
+       }
+      }
+     },
+     {
+      "handler": "static_response",
+      "headers": {
+       "Location": [
+        "https://new.example.org/"
+       ]
+      },
+      "status_code": 302
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / vide": {
+  "listen": [
+   ":443"
+  ]
+ },
+ "serveur HTTPS / vide / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ]
+ },
+ "serveur HTTPS / vide / journal": {
+  "listen": [
+   ":443"
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / vide / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "173.245.48.0/20",
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / vide / sans reglage": {
+  "listen": [
+   ":443"
+  ]
+ },
+ "serveur HTTPS / vide / tout": {
+  "listen": [
+   ":443"
+  ],
+  "trusted_proxies": {
+   "ranges": [
+    "192.0.2.7"
+   ],
+   "source": "static"
+  },
+  "trusted_proxies_strict": 1,
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "tls / auto-signe": {
+  "policies": [
+   {
+    "subjects": [
+     "lan.example.com",
+     "lan2.example.com",
+     "lan3.example.com"
+    ],
+    "issuers": [
+     {
+      "module": "internal"
+     }
+    ]
+   }
+  ]
+ },
+ "tls / chemins": {},
+ "tls / defi dns": {
+  "policies": [
+   {
+    "subjects": [
+     "*.example.org",
+     "wiki.example.com"
+    ],
+    "issuers": [
+     {
+      "challenges": {
+       "dns": {
+        "provider": {
+         "application_key": "ak-fictif",
+         "application_secret": "as-fictif",
+         "consumer_key": "ck-fictif",
+         "endpoint": "ovh-eu",
+         "name": "ovh"
+        }
+       }
+      },
+      "module": "acme"
+     }
+    ]
+   }
+  ]
+ },
+ "tls / desactive": {},
+ "tls / erreur 404": {},
+ "tls / http seulement": {},
+ "tls / melange": {
+  "policies": [
+   {
+    "subjects": [
+     "a.example.com"
+    ],
+    "issuers": [
+     {
+      "challenges": {
+       "dns": {
+        "provider": {
+         "application_key": "ak-fictif",
+         "application_secret": "as-fictif",
+         "consumer_key": "ck-fictif",
+         "endpoint": "ovh-eu",
+         "name": "ovh"
+        }
+       }
+      },
+      "module": "acme"
+     }
+    ]
+   }
+  ]
+ },
+ "tls / proxy acces": {},
+ "tls / proxy alias": {},
+ "tls / proxy crowdsec": {},
+ "tls / proxy h2c": {},
+ "tls / proxy hsts simple": {},
+ "tls / proxy https": {},
+ "tls / proxy options": {},
+ "tls / proxy simple": {},
+ "tls / proxy waf": {},
+ "tls / redirection permanente": {},
+ "tls / redirection temporaire": {},
+ "tls / vide": {}
+}

@@ -1,0 +1,8 @@
+{{define "content"}}<header class="top publish-head"><div><a class="back-link" href="{{.ListPath}}">← Retour aux listes</a><h1>{{.Heading}}</h1></div>{{if .Editing}}<div class="danger-zone"><button type="button" class="btn danger" hx-post="/security/lists/{{.EditID}}/delete" hx-confirm="Supprimer la liste « {{.Name}} » ?" hx-target="#flash" hx-swap="innerHTML">Supprimer</button></div>{{end}}</header>
+<div id="flash" aria-live="polite"></div>
+<div class="grid g2 start"><div class="card publish-main"><form method="post" action="{{.Action}}" class="form">
+{{if .Error}}<div class="note" role="alert"><span class="pill err">Erreur</span> {{.Error}}</div>{{end}}
+<label class="f">Nom<input class="t" name="name" value="{{.Name}}" placeholder="Réseau local" autocomplete="off" required autofocus></label>
+<label class="f">Adresses<textarea class="t mono" name="addresses" rows="5" placeholder="192.0.2.0/24&#10;198.51.100.7" autocomplete="off" autocapitalize="none" spellcheck="false" required>{{.Addresses}}</textarea><small>Une adresse IP ou une plage par ligne.</small></label>
+<div class="actions"><button class="btn primary" type="submit">{{.Submit}}</button><a class="btn" href="{{.ListPath}}">Annuler</a></div></form>
+</div></div>{{end}}

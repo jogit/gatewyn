@@ -1,0 +1,8 @@
+# Local testing: builds the image from the sources and removes the interface password
+# (never in production).
+#   docker compose -f deploy/compose.yml -f deploy/compose.dev.yml up -d --build
+services:
+  gatewyn:
+    build: ..
+    environment:
+      GATEWYN_NO_LOGIN: "1"

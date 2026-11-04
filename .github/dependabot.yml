@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    # Indirect modules come from the Caddy types used by the tests only.
+    allow:
+      - dependency-type: direct
+    groups:
+      go-dependencies:
+        update-types: [minor, patch]
+        exclude-patterns: ["github.com/caddyserver/caddy/*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: docker-compose
+    directory: /deploy
+    schedule:
+      interval: monthly
+    groups:
+      crowdsec:
+        patterns: ["crowdsecurity/*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

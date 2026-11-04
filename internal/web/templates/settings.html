@@ -1,0 +1,17 @@
+{{define "content"}}<header class="top publish-head"><h1>Réglages</h1></header>
+<div id="flash" aria-live="polite">{{if .Flash}}<div class="note"><span class="pill ok">OK</span> {{.Flash}}</div>{{end}}</div>
+<div class="grid g2 start"><div class="card publish-main"><form method="post" action="/settings" class="form" autocomplete="off">
+{{if .Error}}<div class="note" role="alert"><span class="pill err">Erreur</span> {{.Error}}</div>{{end}}
+<div class="opts"><section class="grp"><h3>Interface</h3>
+<label class="f">Langue<select class="t" name="ui_language"><option value="auto"{{if eq .UILanguage "auto"}} selected{{end}}>Automatique (selon le navigateur)</option><option value="fr"{{if eq .UILanguage "fr"}} selected{{end}}>Français</option><option value="en"{{if eq .UILanguage "en"}} selected{{end}}>English</option></select></label>
+</section>
+<section class="grp"><h3>Applications</h3>
+<label class="f">Interface CrowdSec<input class="t mono" name="crowdsec_ui_url" value="{{.CrowdSecUIURL}}" placeholder="Optionnel : https://crowdsec.example.com" autocapitalize="none" spellcheck="false"><small>Adresse du bouton « Interface » de la page Protection. Vide : le bouton est masqué. <a class="inline-link" href="/hosts/new?target=http%3A%2F%2Fcrowdsec-web-ui%3A3000">Publier en HTTPS</a></small></label>
+<label class="f">Rapport GoAccess<input class="t mono" name="goaccess_report_url" value="{{.GoAccessReport}}" placeholder="Optionnel : https://stats.example.com" autocapitalize="none" spellcheck="false"><small>Adresse du bouton « Ouvrir le rapport » de la page Statistiques. Vide : le bouton est masqué. <a class="inline-link" href="/hosts/new?target={{.GoAccessTarget | urlquery}}">Publier en HTTPS</a></small></label>
+</section>
+{{if .AccessLogAvail}}<section class="grp"><h3>Statistiques de trafic</h3>
+<div class="switch"><label for="accesslog"><b>Enregistrer le journal d'accès</b><small>Contient l'adresse IP de chaque visiteur. <a class="inline-link" href="/stats">Voir les statistiques</a></small></label><input type="checkbox" id="accesslog" name="accesslog" value="1"{{if .AccessLogOn}} checked{{end}}><label for="accesslog" class="tog" aria-hidden="true"></label></div>
+<label class="f">Conserver pendant<select class="t" name="accesslog_days">{{range .AccessLogChoices}}<option value="{{.}}"{{if eq $.AccessLogDays .}} selected{{end}}>{{if eq . 365}}1 an{{else}}{{.}} jours{{end}}</option>{{end}}</select></label>
+</section>{{end}}</div>
+<div class="actions"><button class="btn primary" type="submit">Enregistrer</button></div>
+</form></div></div>{{end}}
