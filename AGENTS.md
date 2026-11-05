@@ -20,7 +20,7 @@ A simple web interface to publish services over HTTPS, driving Caddy. Everything
 
 ## Security
 
-- Administrator account created on the first visit to the interface, no default credentials, no setup code (the first visitor is the owner: create the account right after deploying, and keep port 8088 off the Internet). Audit log. Two-factor authentication: not done.
+- Administrator account (username and password chosen by the user) created on the first visit to the interface, no default credentials, no setup code (the first visitor is the owner: create the account right after deploying, and keep port 8088 off the Internet). Audit log. Two-factor authentication: not done.
 - No access to the Docker socket. Integrations are read-only; any action (ban an IP, create a DNS record) needs explicit activation.
 - The admin interface is for the private network only: never expose port 8088 to the Internet.
 - No secret, token, password or private URL in code, tests, logs or examples. Sample data is fictional: `example.com`, `192.0.2.x`.

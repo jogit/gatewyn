@@ -39,7 +39,7 @@ What exists, and why. Outdated decisions are replaced, not kept as history.
 
 ## Security
 
-- Administrator account created on first launch, no default credentials. The first visitor creates the account, with no setup code: create the account right after deploying. Passwords use argon2id, sessions are stored hashed, login attempts are rate-limited (`X-Forwarded-For` is not trusted for it). Audit log of actions.
+- Administrator account (username and password chosen by the user) created on first launch, no default credentials. The first visitor creates the account, with no setup code: create the account right after deploying. Passwords use argon2id, sessions are stored hashed, login attempts are rate-limited (`X-Forwarded-For` is not trusted for it). Audit log of actions.
 - The compose file publishes the admin port 8088 on all addresses: it must stay on a private network (firewall), never on the Internet.
 - Invalid input can never be forced; a DNS or target problem asks for explicit confirmation. If Caddy rejects the configuration, nothing is kept: the database change is rolled back.
 - Access lists by IP address, per host and per path. "Trusted proxies" setting: behind them, the visitor's address comes from `X-Forwarded-For` read right to left, and a forged address is refused.

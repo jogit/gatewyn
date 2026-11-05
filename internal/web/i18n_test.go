@@ -486,20 +486,24 @@ func TestEnglishSetupAndLoginFlows(t *testing.T) {
 	if !strings.Contains(collect("GET /setup", resp, body), "Welcome to Gatewyn") {
 		t.Error("page d'installation non traduite")
 	}
-	resp, body = e.do("POST", "/setup", url.Values{"password": {goodPassword}, "confirm": {"autre chose"}}, en...)
+	resp, body = e.do("POST", "/setup", url.Values{"username": {goodUsername}, "password": {goodPassword}, "confirm": {"autre chose"}}, en...)
 	if !strings.Contains(collect("setup mismatch", resp, body), "do not match") {
 		t.Errorf("mots de passe différents : %s", body)
 	}
-	resp, body = e.do("POST", "/setup", url.Values{"password": {"court"}, "confirm": {"court"}}, en...)
+	resp, body = e.do("POST", "/setup", url.Values{"username": {goodUsername}, "password": {"court"}, "confirm": {"court"}}, en...)
 	if !strings.Contains(collect("setup short", resp, body), "at least") {
 		t.Errorf("mot de passe trop court : %s", body)
+	}
+	resp, body = e.do("POST", "/setup", url.Values{"username": {"a b"}, "password": {goodPassword}, "confirm": {goodPassword}}, en...)
+	if !strings.Contains(collect("setup username", resp, body), "username can only contain") {
+		t.Errorf("identifiant refusé : %s", body)
 	}
 	e.setup()
 
 	// Connexion : mauvais mot de passe, puis trop d'essais.
 	anon := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	login := func(pw string) (*http.Response, string) {
-		rq, _ := http.NewRequest("POST", e.ts.URL+"/login", strings.NewReader(url.Values{"password": {pw}}.Encode()))
+		rq, _ := http.NewRequest("POST", e.ts.URL+"/login", strings.NewReader(url.Values{"username": {goodUsername}, "password": {pw}}.Encode()))
 		rq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		rq.Header.Set("Accept-Language", "en")
 		resp, err := anon.Do(rq)

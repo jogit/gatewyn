@@ -20,6 +20,7 @@ import (
 var migrations = []string{
 	`CREATE TABLE users (
 	   id INTEGER PRIMARY KEY CHECK (id = 1),
+	   username TEXT NOT NULL,
 	   password_hash TEXT NOT NULL,
 	   created_at INTEGER NOT NULL);
 	 CREATE TABLE sessions (
@@ -229,22 +230,21 @@ func (s *Store) AdminExists(ctx context.Context) (bool, error) {
 }
 
 // CreateAdmin crée le compte administrateur ; échoue s'il existe déjà.
-func (s *Store) CreateAdmin(ctx context.Context, passwordHash string) error {
-	_, err := s.db.ExecContext(ctx, "INSERT INTO users (id, password_hash, created_at) VALUES (1, ?, ?)", passwordHash, s.now().Unix())
+func (s *Store) CreateAdmin(ctx context.Context, username, passwordHash string) error {
+	_, err := s.db.ExecContext(ctx, "INSERT INTO users (id, username, password_hash, created_at) VALUES (1, ?, ?, ?)", username, passwordHash, s.now().Unix())
 	if err != nil && strings.Contains(err.Error(), "constraint") {
 		return ErrExists
 	}
 	return err
 }
 
-// AdminHash renvoie l'empreinte du mot de passe administrateur.
-func (s *Store) AdminHash(ctx context.Context) (string, error) {
-	var h string
-	err := s.db.QueryRowContext(ctx, "SELECT password_hash FROM users WHERE id = 1").Scan(&h)
+// AdminCredentials renvoie l'identifiant et l'empreinte du mot de passe administrateur.
+func (s *Store) AdminCredentials(ctx context.Context) (username, hash string, err error) {
+	err = s.db.QueryRowContext(ctx, "SELECT username, password_hash FROM users WHERE id = 1").Scan(&username, &hash)
 	if errors.Is(err, sql.ErrNoRows) {
-		return "", ErrNotFound
+		return "", "", ErrNotFound
 	}
-	return h, err
+	return username, hash, err
 }
 
 // --- sessions (seule l'empreinte du jeton est stockée) ---

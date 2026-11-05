@@ -12,8 +12,10 @@ var messageEntries = []entry{
 	{"le mot de passe ne peut pas être vide", "the password cannot be empty"},
 	{"Requête invalide", "Invalid request"},
 	{"Erreur interne. Le détail est dans les journaux de Gatewyn.", "Internal error. The details are in the Gatewyn logs."},
+	{"Identifiant ou mot de passe incorrect.", "Incorrect username or password."},
+	{"l'identifiant doit faire entre 3 et 32 caractères", "the username must be between 3 and 32 characters long"},
+	{"l'identifiant ne peut contenir que des lettres sans accent, des chiffres, des points, des tirets et des tirets bas", "the username can only contain unaccented letters, digits, dots, hyphens and underscores"},
 	{"Identifiants incorrects.", "Incorrect login."},
-	{"Mot de passe incorrect.", "Incorrect password."},
 
 	// Hôtes : états et confirmations
 	{"%s est publié. Le certificat HTTPS est demandé automatiquement à la première visite.", "%s is published. The HTTPS certificate is requested automatically on the first visit."},

@@ -5,6 +5,7 @@ package web
 import (
 	"bytes"
 	"context"
+	"crypto/subtle"
 	"embed"
 	"errors"
 	"fmt"
@@ -291,6 +292,11 @@ func (s *Server) setupSubmit(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		s.render(w, "setup", page{Title: "Installation", Error: msg})
 	}
+	username := auth.NormalizeUsername(r.PostFormValue("username"))
+	if err := auth.ValidateUsername(username); err != nil {
+		again(capitalize(err.Error()) + ".")
+		return
+	}
 	pw := r.PostFormValue("password")
 	if err := auth.ValidatePassword(pw); err != nil {
 		again(capitalize(err.Error()) + ".")
@@ -305,7 +311,7 @@ func (s *Server) setupSubmit(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	if err := s.cfg.Store.CreateAdmin(r.Context(), hash); err != nil {
+	if err := s.cfg.Store.CreateAdmin(r.Context(), username, hash); err != nil {
 		if errors.Is(err, store.ErrExists) {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
@@ -313,7 +319,7 @@ func (s *Server) setupSubmit(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	_ = s.cfg.Store.Audit(r.Context(), "setup", "compte administrateur créé")
+	_ = s.cfg.Store.Audit(r.Context(), "setup", "compte administrateur créé : "+username)
 	if err := s.startSession(w, r); err != nil {
 		s.fail(w, r, err)
 		return
@@ -344,16 +350,19 @@ func (s *Server) loginSubmit(w http.ResponseWriter, r *http.Request) {
 		s.render(w, "login", page{Title: "Connexion", Error: fmt.Sprintf("Trop d'essais. Réessayez dans %d min.", int(wait.Minutes()))})
 		return
 	}
-	hash, err := s.cfg.Store.AdminHash(r.Context())
+	username, hash, err := s.cfg.Store.AdminCredentials(r.Context())
 	if err != nil {
 		http.Redirect(w, r, "/setup", http.StatusSeeOther)
 		return
 	}
-	if !auth.VerifyPassword(r.PostFormValue("password"), hash) {
+	// Le mot de passe est toujours vérifié, même si l'identifiant est faux : même durée dans les deux cas.
+	passwordOK := auth.VerifyPassword(r.PostFormValue("password"), hash)
+	userOK := subtle.ConstantTimeCompare([]byte(auth.NormalizeUsername(r.PostFormValue("username"))), []byte(username)) == 1
+	if !passwordOK || !userOK {
 		s.limiter.Fail(ip)
 		_ = s.cfg.Store.Audit(r.Context(), "login.failed", "origine "+ip)
 		w.WriteHeader(http.StatusUnauthorized)
-		s.render(w, "login", page{Title: "Connexion", Error: "Mot de passe incorrect."})
+		s.render(w, "login", page{Title: "Connexion", Error: "Identifiant ou mot de passe incorrect."})
 		return
 	}
 	s.limiter.Reset(ip)

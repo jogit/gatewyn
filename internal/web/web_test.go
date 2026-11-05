@@ -33,6 +33,7 @@ import (
 )
 
 const goodPassword = "une phrase de passe correcte"
+const goodUsername = "alice"
 
 type fakeCaddy struct {
 	mu       sync.Mutex
@@ -143,7 +144,7 @@ func (e *env) do(method, path string, form url.Values, headers ...string) (*http
 // setup crée le compte administrateur et ouvre la session.
 func (e *env) setup() {
 	e.t.Helper()
-	resp, _ := e.do("POST", "/setup", url.Values{"password": {goodPassword}, "confirm": {goodPassword}})
+	resp, _ := e.do("POST", "/setup", url.Values{"username": {goodUsername}, "password": {goodPassword}, "confirm": {goodPassword}})
 	if resp.StatusCode != http.StatusSeeOther {
 		e.t.Fatalf("installation : %d", resp.StatusCode)
 	}
@@ -166,7 +167,7 @@ func TestSetupValidatesPassword(t *testing.T) {
 		{goodPassword, "autre chose entièrement", "pas identiques"},
 	}
 	for _, c := range cases {
-		resp, body := e.do("POST", "/setup", url.Values{"password": {c.pw}, "confirm": {c.confirm}})
+		resp, body := e.do("POST", "/setup", url.Values{"username": {goodUsername}, "password": {c.pw}, "confirm": {c.confirm}})
 		if resp.StatusCode != 422 || !strings.Contains(body, c.want) {
 			t.Errorf("%q : %d", c.pw, resp.StatusCode)
 		}
@@ -176,10 +177,42 @@ func TestSetupValidatesPassword(t *testing.T) {
 	}
 }
 
+func TestSetupValidatesUsername(t *testing.T) {
+	e := newEnv(t)
+	for _, u := range []string{"", "ab", "avec espace", "accentué", strings.Repeat("a", 33)} {
+		resp, body := e.do("POST", "/setup", url.Values{"username": {u}, "password": {goodPassword}, "confirm": {goodPassword}})
+		if resp.StatusCode != 422 || !strings.Contains(body, "identifiant") {
+			t.Errorf("%q : %d", u, resp.StatusCode)
+		}
+	}
+	if ok, _ := e.store.AdminExists(context.Background()); ok {
+		t.Fatal("compte créé avec un identifiant refusé")
+	}
+}
+
+func TestLoginNeedsUsernameAndPassword(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	e.do("POST", "/logout", nil)
+	for _, u := range []string{"", "bob"} {
+		resp, body := e.do("POST", "/login", url.Values{"username": {u}, "password": {goodPassword}})
+		if resp.StatusCode != 401 || !strings.Contains(body, "Identifiant ou mot de passe incorrect") {
+			t.Errorf("identifiant %q avec le bon mot de passe : %d", u, resp.StatusCode)
+		}
+	}
+	// L'identifiant n'est pas sensible à la casse ni aux espaces autour.
+	if resp, _ := e.do("POST", "/login", url.Values{"username": {"  Alice "}, "password": {goodPassword}}); resp.StatusCode != 303 {
+		t.Errorf("identifiant en majuscules : %d", resp.StatusCode)
+	}
+}
+
 func TestSetupCreatesAccountAndSession(t *testing.T) {
 	e := newEnv(t)
 	e.setup()
-	hash, _ := e.store.AdminHash(context.Background())
+	user, hash, _ := e.store.AdminCredentials(context.Background())
+	if user != goodUsername {
+		t.Errorf("identifiant stocké : %q", user)
+	}
 	if strings.Contains(hash, goodPassword) || !strings.HasPrefix(hash, "argon2id$") {
 		t.Errorf("empreinte stockée : %s", hash)
 	}
@@ -191,14 +224,14 @@ func TestSetupCreatesAccountAndSession(t *testing.T) {
 	if resp, _ := e.do("GET", "/setup", nil); resp.Header.Get("Location") != "/login" {
 		t.Errorf("/setup après installation → %s", resp.Header.Get("Location"))
 	}
-	if resp, _ := e.do("POST", "/setup", url.Values{"password": {goodPassword}, "confirm": {goodPassword}}); resp.Header.Get("Location") != "/login" {
+	if resp, _ := e.do("POST", "/setup", url.Values{"username": {goodUsername}, "password": {goodPassword}, "confirm": {goodPassword}}); resp.Header.Get("Location") != "/login" {
 		t.Errorf("POST /setup après installation → %d %s", resp.StatusCode, resp.Header.Get("Location"))
 	}
 }
 
 func TestSessionCookieFlags(t *testing.T) {
 	e := newEnv(t)
-	resp, _ := e.do("POST", "/setup", url.Values{"password": {goodPassword}, "confirm": {goodPassword}})
+	resp, _ := e.do("POST", "/setup", url.Values{"username": {goodUsername}, "password": {goodPassword}, "confirm": {goodPassword}})
 	var c *http.Cookie
 	for _, k := range resp.Cookies() {
 		if k.Name == cookieName {
@@ -255,13 +288,13 @@ func TestLoginWrongPasswordThenRateLimit(t *testing.T) {
 	e.setup()
 	e.do("POST", "/logout", url.Values{})
 	for i := 0; i < 5; i++ {
-		resp, body := e.do("POST", "/login", url.Values{"password": {"mauvais mot de passe"}})
-		if resp.StatusCode != 401 || !strings.Contains(body, "Mot de passe incorrect") {
+		resp, body := e.do("POST", "/login", url.Values{"username": {goodUsername}, "password": {"mauvais mot de passe"}})
+		if resp.StatusCode != 401 || !strings.Contains(body, "Identifiant ou mot de passe incorrect") {
 			t.Fatalf("essai %d : %d", i, resp.StatusCode)
 		}
 	}
 	// Même le bon mot de passe est refusé pendant le blocage.
-	resp, body := e.do("POST", "/login", url.Values{"password": {goodPassword}})
+	resp, body := e.do("POST", "/login", url.Values{"username": {goodUsername}, "password": {goodPassword}})
 	if resp.StatusCode != 429 || !strings.Contains(body, "Trop d&#39;essais") || resp.Header.Get("Retry-After") == "" {
 		t.Errorf("blocage : %d %q", resp.StatusCode, resp.Header.Get("Retry-After"))
 	}
@@ -287,7 +320,7 @@ func TestLoginAndLogout(t *testing.T) {
 	if resp, _ := e.do("GET", "/", nil); resp.StatusCode != 303 {
 		t.Fatalf("encore connecté après déconnexion : %d", resp.StatusCode)
 	}
-	resp, _ := e.do("POST", "/login", url.Values{"password": {goodPassword}})
+	resp, _ := e.do("POST", "/login", url.Values{"username": {goodUsername}, "password": {goodPassword}})
 	if resp.StatusCode != 303 || resp.Header.Get("Location") != "/" {
 		t.Fatalf("connexion : %d", resp.StatusCode)
 	}

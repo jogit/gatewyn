@@ -119,3 +119,19 @@ func TestLimiter(t *testing.T) {
 		t.Error("Reset sans effet")
 	}
 }
+
+func TestUsername(t *testing.T) {
+	if got := NormalizeUsername("  Alice "); got != "alice" {
+		t.Errorf("NormalizeUsername = %q", got)
+	}
+	for _, ok := range []string{"abc", "alice.b-c_9", strings.Repeat("a", 32)} {
+		if err := ValidateUsername(ok); err != nil {
+			t.Errorf("%q refusé : %v", ok, err)
+		}
+	}
+	for _, bad := range []string{"", "ab", "a b", "é-é-é", "a@b.c", strings.Repeat("a", 33)} {
+		if ValidateUsername(bad) == nil {
+			t.Errorf("%q accepté", bad)
+		}
+	}
+}

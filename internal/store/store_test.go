@@ -30,17 +30,17 @@ func TestAdminLifecycle(t *testing.T) {
 	if ok, _ := s.AdminExists(ctx); ok {
 		t.Fatal("administrateur présent sur une base neuve")
 	}
-	if _, err := s.AdminHash(ctx); !errors.Is(err, ErrNotFound) {
-		t.Errorf("AdminHash = %v", err)
+	if _, _, err := s.AdminCredentials(ctx); !errors.Is(err, ErrNotFound) {
+		t.Errorf("AdminCredentials = %v", err)
 	}
-	if err := s.CreateAdmin(ctx, "hash1"); err != nil {
+	if err := s.CreateAdmin(ctx, "alice", "hash1"); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.CreateAdmin(ctx, "hash2"); !errors.Is(err, ErrExists) {
+	if err := s.CreateAdmin(ctx, "bob", "hash2"); !errors.Is(err, ErrExists) {
 		t.Errorf("deuxième administrateur : %v", err)
 	}
-	if h, _ := s.AdminHash(ctx); h != "hash1" {
-		t.Errorf("empreinte = %q", h)
+	if u, h, _ := s.AdminCredentials(ctx); u != "alice" || h != "hash1" {
+		t.Errorf("compte = %q, %q", u, h)
 	}
 }
 

@@ -1,4 +1,4 @@
-// Package auth gère le mot de passe administrateur (argon2id), les jetons de
+// Package auth gère l'identifiant et le mot de passe administrateur (argon2id), les jetons de
 // session et la limitation des tentatives de connexion. Aucun identifiant par
 // défaut : le compte est créé au premier lancement.
 package auth
@@ -33,6 +33,25 @@ const MinPasswordLength = 12
 
 // maxPasswordLength borne le travail demandé au serveur par une requête.
 const maxPasswordLength = 256
+
+// NormalizeUsername met un identifiant sous sa forme stockée (sans espaces autour, en minuscules).
+func NormalizeUsername(u string) string {
+	return strings.ToLower(strings.TrimSpace(u))
+}
+
+// ValidateUsername vérifie qu'un identifiant est acceptable : 3 à 32 caractères,
+// lettres, chiffres, point, tiret et tiret bas. Il s'attend à une valeur déjà normalisée.
+func ValidateUsername(u string) error {
+	if n := utf8.RuneCountInString(u); n < 3 || n > 32 {
+		return errors.New("l'identifiant doit faire entre 3 et 32 caractères")
+	}
+	for _, r := range u {
+		if !(r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '.' || r == '-' || r == '_') {
+			return errors.New("l'identifiant ne peut contenir que des lettres sans accent, des chiffres, des points, des tirets et des tirets bas")
+		}
+	}
+	return nil
+}
 
 // ValidatePassword vérifie qu'un nouveau mot de passe est acceptable.
 func ValidatePassword(pw string) error {
