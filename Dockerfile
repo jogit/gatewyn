@@ -1,12 +1,12 @@
 # Image de Gatewyn : un seul conteneur avec Caddy et Gatewyn, comme NPM.
 # Gatewyn lance Caddy et le relance s'il s'arrête (GATEWYN_CADDY_BIN).
 # Versions épinglées ; ajouter un module Caddy = nouvelle version de l'image.
-ARG GO_VERSION=1.27.3
-ARG CADDY_VERSION=2.11.9
+# Les versions de Caddy et de Go sont écrites directement dans les FROM (et non dans un ARG) :
+# Dependabot ne lit pas les variables.
 
 # Caddy avec le bouncer CrowdSec et les fournisseurs DNS du défi ACME (internal/dnsprov).
 # Un fournisseur de plus = une ligne ici et une entrée dans internal/dnsprov.
-FROM caddy:${CADDY_VERSION}-builder AS caddy
+FROM caddy:2.11.9-builder AS caddy
 RUN CGO_ENABLED=0 xcaddy build \
     --with github.com/hslatman/caddy-crowdsec-bouncer/http@v0.15.0 \
     --with github.com/caddy-dns/cloudflare@v0.2.4 \
@@ -19,7 +19,7 @@ RUN CGO_ENABLED=0 xcaddy build \
     --with github.com/caddy-dns/ionos@v1.3.0
 
 # Gatewyn : un binaire statique (interface intégrée), sans CGO.
-FROM golang:${GO_VERSION} AS build
+FROM golang:1.27.3 AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
