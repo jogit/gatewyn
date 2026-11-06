@@ -2690,3 +2690,69 @@ func TestCrowdSecKeyFoundAutomatically(t *testing.T) {
 		t.Errorf("clé du fichier refusée par CrowdSec : %d", resp.StatusCode)
 	}
 }
+
+func TestChangePassword(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	// Une seconde session, ouverte ailleurs : elle doit être fermée par le changement.
+	other := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	form := url.Values{"username": {goodUsername}, "password": {goodPassword}}
+	resp, err := other.PostForm(e.ts.URL+"/login", form)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	otherCookie := resp.Cookies()[0]
+
+	newPw := goodPassword + "-nouveau"
+	for name, f := range map[string]url.Values{
+		"ancien faux": {"current": {"faux"}, "password": {newPw}, "confirm": {newPw}},
+		"trop court":  {"current": {goodPassword}, "password": {"court"}, "confirm": {"court"}},
+		"différents":  {"current": {goodPassword}, "password": {newPw}, "confirm": {newPw + "x"}},
+	} {
+		if resp, _ := e.do("POST", "/settings/password", f); resp.StatusCode < 400 {
+			t.Errorf("%s accepté : %d", name, resp.StatusCode)
+		}
+	}
+	if resp, _ := e.do("POST", "/login", url.Values{"username": {goodUsername}, "password": {goodPassword}}); resp.StatusCode != 303 {
+		t.Fatalf("l'ancien mot de passe a cessé de marcher après des refus : %d", resp.StatusCode)
+	}
+
+	resp, _ = e.do("POST", "/settings/password", url.Values{"current": {goodPassword}, "password": {newPw}, "confirm": {newPw}})
+	if resp.StatusCode != 303 {
+		t.Fatalf("changement : %d", resp.StatusCode)
+	}
+	if resp, _ := e.do("GET", "/", nil); resp.StatusCode != 200 {
+		t.Errorf("la session courante doit rester ouverte : %d", resp.StatusCode)
+	}
+	req, _ := http.NewRequest("GET", e.ts.URL+"/", nil)
+	req.AddCookie(otherCookie)
+	r2, _ := other.Do(req)
+	r2.Body.Close()
+	if r2.StatusCode != 303 {
+		t.Errorf("l'autre session doit être fermée : %d", r2.StatusCode)
+	}
+	e.do("POST", "/logout", url.Values{})
+	if resp, _ := e.do("POST", "/login", url.Values{"username": {goodUsername}, "password": {goodPassword}}); resp.StatusCode != 401 {
+		t.Errorf("l'ancien mot de passe marche encore : %d", resp.StatusCode)
+	}
+	if resp, _ := e.do("POST", "/login", url.Values{"username": {goodUsername}, "password": {newPw}}); resp.StatusCode != 303 {
+		t.Errorf("le nouveau mot de passe ne marche pas : %d", resp.StatusCode)
+	}
+}
+
+func TestChangePasswordRequiresLoginAndIsRateLimited(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	for i := 0; i < 20; i++ {
+		e.do("POST", "/settings/password", url.Values{"current": {"faux"}})
+	}
+	resp, _ := e.do("POST", "/settings/password", url.Values{"current": {goodPassword}, "password": {goodPassword + "x"}, "confirm": {goodPassword + "x"}})
+	if resp.StatusCode != http.StatusTooManyRequests {
+		t.Errorf("pas de limitation des essais : %d", resp.StatusCode)
+	}
+	e.do("POST", "/logout", url.Values{})
+	if resp, _ := e.do("POST", "/settings/password", url.Values{"current": {goodPassword}}); resp.StatusCode != 303 {
+		t.Errorf("accessible sans connexion : %d", resp.StatusCode)
+	}
+}

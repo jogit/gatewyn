@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/jogit/gatewyn/internal/auth"
 )
 
 const settingCSWebUI = "crowdsec.web_ui_url"
@@ -55,15 +57,84 @@ func validWebURL(v string) bool {
 }
 
 func (s *Server) settingsPage(w http.ResponseWriter, r *http.Request) {
+	p := s.settingsData(r)
+	if r.URL.Query().Get("saved") != "" {
+		p.Flash = "Les réglages sont enregistrés."
+	}
+	if r.URL.Query().Get("password") != "" {
+		p.Flash = "Le mot de passe est modifié. Les autres sessions sont fermées."
+	}
+	s.render(w, "settings", p)
+}
+
+// settingsData prépare la page Réglages avec les valeurs enregistrées.
+func (s *Server) settingsData(r *http.Request) page {
 	p := s.authedPage(r, "Réglages", "settings")
+	p.CanChangePw = !s.cfg.NoLogin
 	p.CrowdSecUIURL = s.crowdSecWebUIURL(r.Context(), defaultCrowdSecURL, pageHost(r))
 	p.GoAccessReport, p.GoAccessTarget = s.goAccessReportURL(r.Context(), pageHost(r)), s.cfg.GoAccessURL
 	p.UILanguage = s.languageSetting(r.Context())
 	s.fillAccessLog(r.Context(), &p)
-	if r.URL.Query().Get("saved") != "" {
-		p.Flash = "Les réglages sont enregistrés."
+	return p
+}
+
+// changePassword remplace le mot de passe après vérification de l'ancien. Les autres sessions
+// sont fermées : si quelqu'un d'autre était connecté, il ne l'est plus.
+func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.NoLogin {
+		http.NotFound(w, r)
+		return
 	}
-	s.render(w, "settings", p)
+	if !s.parseForm(w, r) {
+		return
+	}
+	again := func(status int, msg string) {
+		p := s.settingsData(r)
+		p.PwError = msg
+		w.WriteHeader(status)
+		s.render(w, "settings", p)
+	}
+	key := "password:" + clientIP(r)
+	if !s.limiter.Allowed(key) {
+		again(http.StatusTooManyRequests, "Trop d'essais. Réessayez dans quelques minutes.")
+		return
+	}
+	_, hash, err := s.cfg.Store.AdminCredentials(r.Context())
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	if !auth.VerifyPassword(r.PostFormValue("current"), hash) {
+		s.limiter.Fail(key)
+		s.audit(r.Context(), "password.failed", "ancien mot de passe incorrect, origine "+clientIP(r))
+		again(http.StatusUnauthorized, "Le mot de passe actuel est incorrect.")
+		return
+	}
+	pw := r.PostFormValue("password")
+	if err := auth.ValidatePassword(pw); err != nil {
+		again(http.StatusUnprocessableEntity, capitalize(err.Error())+".")
+		return
+	}
+	if pw != r.PostFormValue("confirm") {
+		again(http.StatusUnprocessableEntity, "Les deux mots de passe ne sont pas identiques.")
+		return
+	}
+	newHash, err := auth.HashPassword(pw)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	keep := ""
+	if c, err := r.Cookie(cookieName); err == nil {
+		keep = auth.HashToken(c.Value)
+	}
+	if err := s.cfg.Store.ChangePassword(r.Context(), newHash, keep); err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	s.limiter.Reset(key)
+	s.audit(r.Context(), "password.change", "mot de passe modifié, origine "+clientIP(r))
+	http.Redirect(w, r, "/settings?password=1", http.StatusSeeOther)
 }
 
 func (s *Server) saveSettings(w http.ResponseWriter, r *http.Request) {

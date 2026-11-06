@@ -4,6 +4,9 @@ package i18n
 // confirmations). Chaque clé est le texte exact du code, avec %s, %d ou %q pour la partie variable.
 var messageEntries = []entry{
 	// Connexion, installation, mot de passe
+	{"Le mot de passe actuel est incorrect.", "The current password is incorrect."},
+	{"Trop d'essais. Réessayez dans quelques minutes.", "Too many attempts. Try again in a few minutes."},
+	{"Le mot de passe est modifié. Les autres sessions sont fermées.", "The password is changed. Other sessions are signed out."},
 	{"Les deux mots de passe ne sont pas identiques.", "The two passwords do not match."},
 	{"compte administrateur créé", "administrator account created"},
 	{"Trop d'essais. Réessayez dans %d min.", "Too many attempts. Try again in %d min."},

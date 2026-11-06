@@ -247,6 +247,23 @@ func (s *Store) AdminCredentials(ctx context.Context) (username, hash string, er
 	return username, hash, err
 }
 
+// ChangePassword remplace l'empreinte du mot de passe et ferme toutes les sessions sauf celle
+// dont l'empreinte est keepToken (la session qui a fait le changement).
+func (s *Store) ChangePassword(ctx context.Context, passwordHash, keepToken string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.ExecContext(ctx, "UPDATE users SET password_hash = ? WHERE id = 1", passwordHash); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM sessions WHERE token_hash <> ?", keepToken); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 // --- sessions (seule l'empreinte du jeton est stockée) ---
 
 func (s *Store) CreateSession(ctx context.Context, tokenHash string, expires time.Time) error {

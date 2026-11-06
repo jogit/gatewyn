@@ -14,4 +14,12 @@
 <label class="f">Conserver pendant<select class="t" name="accesslog_days">{{range .AccessLogChoices}}<option value="{{.}}"{{if eq $.AccessLogDays .}} selected{{end}}>{{if eq . 365}}1 an{{else}}{{.}} jours{{end}}</option>{{end}}</select></label>
 </section>{{end}}</div>
 <div class="actions"><button class="btn primary" type="submit">Enregistrer</button></div>
-</form></div></div>{{end}}
+</form></div>{{if .CanChangePw}}<div class="card publish-main"><form method="post" action="/settings/password" class="form" autocomplete="off">
+{{if .PwError}}<div class="note" role="alert"><span class="pill err">Erreur</span> {{.PwError}}</div>{{end}}
+<div class="opts"><section class="grp"><h3>Mot de passe</h3>
+<label class="f">Mot de passe actuel<input class="t" type="password" name="current" autocomplete="current-password" required></label>
+<label class="f">Nouveau mot de passe<input class="t" type="password" name="password" autocomplete="new-password" required minlength="12"></label>
+<label class="f">Confirmer le nouveau mot de passe<input class="t" type="password" name="confirm" autocomplete="new-password" required minlength="12"></label>
+</section></div>
+<div class="actions"><button class="btn primary" type="submit">Changer le mot de passe</button></div>
+</form></div>{{end}}</div>{{end}}

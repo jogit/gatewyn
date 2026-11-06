@@ -16,7 +16,10 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -28,6 +31,7 @@ import (
 	"time"
 
 	"github.com/jogit/gatewyn/internal/acmelog"
+	"github.com/jogit/gatewyn/internal/auth"
 	"github.com/jogit/gatewyn/internal/caddyadmin"
 	"github.com/jogit/gatewyn/internal/caddyproc"
 	"github.com/jogit/gatewyn/internal/secrets"
@@ -64,11 +68,56 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
 		os.Exit(healthcheck(env("GATEWYN_LISTEN", "127.0.0.1:8080")))
 	}
+	if len(os.Args) > 1 && os.Args[1] == "reset-password" {
+		os.Exit(runResetPassword())
+	}
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	if err := run(log); err != nil {
 		log.Error("shutdown", "error", err)
 		os.Exit(1)
 	}
+}
+
+// resetPassword remplace le mot de passe administrateur par un mot de passe aléatoire, ferme toutes
+// les sessions et le renvoie. Il sert quand le mot de passe est perdu :
+// docker exec <conteneur> /gatewyn reset-password
+func resetPassword(ctx context.Context, st *store.Store) (string, error) {
+	if exists, err := st.AdminExists(ctx); err != nil {
+		return "", err
+	} else if !exists {
+		return "", errors.New("aucun compte administrateur : créez-le depuis l'interface")
+	}
+	b := make([]byte, 24)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	pw := base64.RawURLEncoding.EncodeToString(b)
+	hash, err := auth.HashPassword(pw)
+	if err != nil {
+		return "", err
+	}
+	if err := st.ChangePassword(ctx, hash, ""); err != nil {
+		return "", err
+	}
+	_ = st.Audit(ctx, "password.reset", "mot de passe réinitialisé en ligne de commande")
+	return pw, nil
+}
+
+func runResetPassword() int {
+	st, err := store.Open(env("GATEWYN_DB", "gatewyn.db"))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
+	defer st.Close()
+	pw, err := resetPassword(context.Background(), st)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		return 1
+	}
+	fmt.Println("New administrator password (all sessions are closed, change it in Settings):")
+	fmt.Println(pw)
+	return 0
 }
 
 func env(key, def string) string {

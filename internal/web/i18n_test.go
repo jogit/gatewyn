@@ -336,9 +336,12 @@ func TestEnglishPagesHaveNoFrench(t *testing.T) {
 		get("/hosts?enabled=wiki.example.com"), get("/hosts?deleted=wiki.example.com"),
 		get("/security/access?added=Bureau"), get("/security/access?changed=Bureau"), get("/security/access?deleted=Bureau"),
 		get("/certificates/dns?added=Mon+OVH"), get("/certificates/dns?changed=Mon+OVH"), get("/certificates/dns?deleted=Mon+OVH"),
-		get("/settings?saved=1"), get("/security/proxies?saved=1"),
+		get("/settings?saved=1"), get("/settings?password=1"), get("/security/proxies?saved=1"),
 		get("/security/protection?csconnected=1"), get("/security/protection?csenabled=1"), get("/security/protection?csdisabled=1"), get("/security/protection?csremoved=1"),
 		// Saisies invalides
+		post("/settings/password", url.Values{"current": {"faux"}}),
+		post("/settings/password", url.Values{"current": {goodPassword}, "password": {"court"}, "confirm": {"court"}}),
+		post("/settings/password", url.Values{"current": {goodPassword}, "password": {goodPassword + "x"}, "confirm": {"autre"}}),
 		post("/hosts", url.Values{}),
 		post("/hosts", url.Values{"domain": {"wiki.example.com"}}),
 		post("/hosts", url.Values{"domain": {"http://x"}, "target": {"192.0.2.1:80"}}),

@@ -315,6 +315,10 @@ var uiEntries = []entry{
 
 	// Réglages
 	{"Langue", "Language"},
+	{"Mot de passe actuel", "Current password"},
+	{"Nouveau mot de passe", "New password"},
+	{"Confirmer le nouveau mot de passe", "Confirm the new password"},
+	{"Changer le mot de passe", "Change the password"},
 	{"Automatique (selon le navigateur)", "Automatic (from the browser)"},
 	{"Applications", "Applications"},
 	{"Interface CrowdSec", "CrowdSec interface"},

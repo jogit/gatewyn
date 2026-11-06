@@ -147,6 +147,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /stats/journal", s.auth(s.statsJournal))
 	mux.HandleFunc("GET /settings", s.auth(s.settingsPage))
 	mux.HandleFunc("POST /settings", s.auth(s.saveSettings))
+	mux.HandleFunc("POST /settings/password", s.auth(s.changePassword))
 	mux.HandleFunc("GET /certificates", s.auth(s.certificatesPage))
 	mux.HandleFunc("GET /certificates/root.crt", s.auth(s.downloadRootCert))
 	mux.HandleFunc("GET /certificates/dns", s.auth(s.dnsAccountsPage))
@@ -674,6 +675,8 @@ type page struct {
 	Title, Nav       string
 	Authed, CaddyOK  bool
 	Flash, Error     string
+	PwError          string // erreur du formulaire de changement de mot de passe
+	CanChangePw      bool
 	Hosts            []hostView
 	Domain, Target   string
 	Checks           []resultView

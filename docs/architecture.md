@@ -84,7 +84,7 @@ Known limits:
 - The NPM reader counts redirects, 404 hosts, streams and access lists without importing them; it has no screen.
 - No option to ignore the target's certificate (a NAS with a self-signed HTTPS certificate is flagged but cannot be used). 307 and 308 redirects are not handled.
 - No test of port 443 from outside. The public address (used for the DNS check) is set with `GATEWYN_PUBLIC_IP`, with no automatic detection.
-- A single administrator account: no password change in the interface, no multiple users.
+- A single administrator account, no multiple users. The password can be changed in Settings (current password required, other sessions are signed out); if it is lost, `docker exec <container> /gatewyn reset-password` sets a random one, prints it and closes all sessions.
 - No two-factor authentication, no TCP/UDP streams (would need the `caddy-l4` module).
 
 ## Out of scope
