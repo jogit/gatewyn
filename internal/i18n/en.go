@@ -269,6 +269,7 @@ var uiEntries = []entry{
 	{"Règles déclenchées", "Rules triggered"},
 	{"Sites protégés", "Protected sites"},
 	{"Blocage des adresses", "Address blocking"},
+	{"Limite connue : en HTTP/2 et HTTP/3, le corps d'une requête sans Content-Length n'est pas inspecté par le WAF.", "Known limit: over HTTP/2 and HTTP/3, the body of a request without Content-Length is not inspected by the WAF."},
 	{"Le blocage des adresses s'applique à tous les services. Le WAF se règle service par service, dans le groupe Protection.", "Address blocking applies to every service. The WAF is set per service, in the Protection group."},
 	{"Aucun service publié pour le moment.", "No service published yet."},
 	{"Règle", "Rule"},

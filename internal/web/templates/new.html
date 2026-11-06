@@ -22,7 +22,7 @@
 <div class="switch sub"><label for="hsts_sub"><b>Inclure les sous-domaines</b></label><input type="checkbox" id="hsts_sub" name="hsts_sub" value="1"{{if eq .HSTS 2}} checked{{end}}><label for="hsts_sub" class="tog" aria-hidden="true"></label></div>
 </section>
 <section class="grp"><h3>Protection</h3>
-{{if eq .Kind "proxy"}}{{if or .WAFAvailable .WAF}}<div class="switch"><label for="waf"><b>WAF (CrowdSec AppSec)</b></label><input type="checkbox" id="waf" name="waf" value="1"{{if .WAF}} checked{{end}}><label for="waf" class="tog" aria-hidden="true"></label></div>{{end}}{{end}}
+{{if eq .Kind "proxy"}}{{if or .WAFAvailable .WAF}}<div class="switch"><label for="waf"><b>WAF (CrowdSec AppSec)</b></label><input type="checkbox" id="waf" name="waf" value="1"{{if .WAF}} checked{{end}}><label for="waf" class="tog" aria-hidden="true"></label></div><p class="hint">Limite connue : en HTTP/2 et HTTP/3, le corps d'une requête sans Content-Length n'est pas inspecté par le WAF.</p>{{end}}{{end}}
 {{if eq .Kind "proxy"}}<label class="f">Affichage dans une iframe<select class="t" name="frame"><option value="">Autorisé</option><option value="SAMEORIGIN"{{if eq .FrameOptions "SAMEORIGIN"}} selected{{end}}>Seulement depuis ce même domaine</option><option value="DENY"{{if eq .FrameOptions "DENY"}} selected{{end}}>Interdit</option></select></label>{{end}}
 <div class="switch"><label for="noindex"><b>Masquer des moteurs de recherche</b></label><input type="checkbox" id="noindex" name="noindex" value="1"{{if .NoIndex}} checked{{end}}><label for="noindex" class="tog" aria-hidden="true"></label></div>
 </section>
