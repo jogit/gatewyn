@@ -3,7 +3,7 @@ module github.com/jogit/gatewyn
 go 1.27.3
 
 require (
-	github.com/caddyserver/caddy/v2 v2.11.7
+	github.com/caddyserver/caddy/v2 v2.11.9
 	golang.org/x/crypto v0.58.0
 	golang.org/x/net v0.62.0
 	modernc.org/sqlite v1.61.1

@@ -2,13 +2,13 @@
 # Gatewyn lance Caddy et le relance s'il s'arrête (GATEWYN_CADDY_BIN).
 # Versions épinglées ; ajouter un module Caddy = nouvelle version de l'image.
 ARG GO_VERSION=1.27.3
-ARG CADDY_VERSION=2.11.7
+ARG CADDY_VERSION=2.11.9
 
 # Caddy avec le bouncer CrowdSec et les fournisseurs DNS du défi ACME (internal/dnsprov).
 # Un fournisseur de plus = une ligne ici et une entrée dans internal/dnsprov.
 FROM caddy:${CADDY_VERSION}-builder AS caddy
 RUN CGO_ENABLED=0 xcaddy build \
-    --with github.com/hslatman/caddy-crowdsec-bouncer/http@v0.14.1 \
+    --with github.com/hslatman/caddy-crowdsec-bouncer/http@v0.15.0 \
     --with github.com/caddy-dns/cloudflare@v0.2.4 \
     --with github.com/caddy-dns/ovh@v1.1.0 \
     --with github.com/caddy-dns/gandi@v1.2.1 \

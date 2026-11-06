@@ -78,7 +78,7 @@ services:
 
   crowdsec-web-ui:
     profiles: ["crowdsec"]
-    image: ghcr.io/theduffman85/crowdsec-web-ui:2026.11.3
+    image: ghcr.io/theduffman85/crowdsec-web-ui:2026.11.5
     restart: unless-stopped
     depends_on:
       crowdsec:
