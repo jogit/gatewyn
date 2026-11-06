@@ -689,7 +689,7 @@ func (s *Server) domainTaken(ctx context.Context, domains []string, exceptID int
 
 // --- affichage d'un hôte dans la liste ---
 
-func toView(h store.Host) hostView {
+func toView(h store.Host, listNames map[int64]string) hostView {
 	v := hostView{ID: h.ID, Domain: h.Domain, Aliases: strings.Join(h.Aliases, ", "), Kind: kindFromForm(h.Kind), Target: h.Target, Disabled: h.Disabled}
 	switch v.Kind {
 	case caddyconf.KindRedirect:
@@ -707,6 +707,33 @@ func toView(h store.Host) hostView {
 	default:
 		v.Dest = h.Target
 		v.IsProxy = true
+		v.Tags = hostTags(h, listNames)
 	}
 	return v
+}
+
+// hostTags liste les options d'un service qui comptent pour l'accès ou la sécurité : qui peut
+// venir, et si la connexion est protégée. Les réglages de confort (compression…) restent dans le formulaire.
+func hostTags(h store.Host, listNames map[int64]string) []tagView {
+	var tags []tagView
+	if h.AccessListID != 0 {
+		name := listNames[h.AccessListID]
+		if name == "" {
+			name = "inconnue"
+		}
+		tags = append(tags, tagView{"info", fmt.Sprintf("Liste d'accès : %s", name)})
+	}
+	if h.WAF {
+		tags = append(tags, tagView{"ok", "WAF"})
+	}
+	if h.HSTS > 0 {
+		tags = append(tags, tagView{"ok", "HSTS"})
+	}
+	if h.HTTPOnly {
+		tags = append(tags, tagView{"warn", "HTTP seulement"})
+	}
+	if h.SelfSigned {
+		tags = append(tags, tagView{"warn", "Certificat auto-signé"})
+	}
+	return tags
 }

@@ -11,7 +11,7 @@
 {{else}}<div class="card empty"><p><b>Aucun hôte pour l'instant.</b></p><p class="muted">Un hôte publie un service en HTTPS : un nom de domaine et l'adresse du service suffisent.</p><a class="btn primary" href="/hosts/new">Publier un premier service</a></div>{{end}}{{end}}
 
 {{define "row"}}<tr id="host-{{.ID}}"><td data-l="État">{{if .Disabled}}<span class="pill"><span class="dot"></span>Désactivé</span>{{else if .IsProxy}}<span hx-get="/hosts/{{.ID}}/status" hx-trigger="load" hx-swap="outerHTML"><span class="pill"><span class="dot"></span>Vérification…</span></span>{{else}}<span class="pill ok"><span class="dot ok"></span>Actif</span>{{end}}</td>
-<td class="host"><b>{{.Domain}}</b>{{if .Aliases}}<br><small class="muted">aussi : {{.Aliases}}</small>{{end}}<br><small class="mono muted">{{.Dest}}</small>{{if .CertProblem}}<br><span class="pill err">Certificat non obtenu</span> <small class="cert-problem">{{.CertProblem}}</small>{{end}}</td>
+<td class="host"><b>{{.Domain}}</b>{{if .Aliases}}<br><small class="muted">aussi : {{.Aliases}}</small>{{end}}<br><small class="mono muted">{{.Dest}}</small>{{if .Tags}}<br>{{range .Tags}}<span class="pill sm {{.Class}}">{{.Label}}</span> {{end}}{{end}}{{if .CertProblem}}<br><span class="pill err">Certificat non obtenu</span> <small class="cert-problem">{{.CertProblem}}</small>{{end}}</td>
 {{if eq .Kind "redirect"}}<td data-l="Type"><span class="pill info">{{.Type}}</span><br><small class="muted">{{.Detail}}</small></td>{{end}}<td class="right"><a class="btn sm" href="/hosts/{{.ID}}/edit">Modifier</a></td></tr>{{end}}
 
 {{define "status"}}<span class="pill {{.Class}}" title="{{.Message}}"><span class="dot {{.Class}}"></span>{{.Label}}</span>{{end}}

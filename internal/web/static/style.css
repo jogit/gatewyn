@@ -166,6 +166,7 @@ small { font-size: 13px; }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.err { background: var(--err-soft); color: var(--err); }
 .pill.info { background: var(--violet-soft); color: var(--violet); }
+.pill.sm { padding: 2px 8px; font-size: 12px; margin-top: 4px; }
 .dot { display: inline-block; width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--muted); }
 .dot.ok { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb,var(--ok) 15%,transparent); }
 .dot.warn { background: var(--warn); }

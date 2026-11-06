@@ -2756,3 +2756,48 @@ func TestChangePasswordRequiresLoginAndIsRateLimited(t *testing.T) {
 		t.Errorf("accessible sans connexion : %d", resp.StatusCode)
 	}
 }
+
+func TestHostListShowsAccessAndSecurityTags(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	ctx := context.Background()
+	listID, err := e.store.AddAccessList(ctx, store.AccessList{Name: "Bureau", Addresses: []string{"192.0.2.0/24"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.store.AddHostFull(ctx, store.Host{Domain: "plain.example.com", Target: "http://192.0.2.1"})
+	e.store.AddHostFull(ctx, store.Host{Domain: "full.example.com", Target: "http://192.0.2.2",
+		AccessListID: listID, WAF: true, HSTS: 1, HTTPOnly: true, SelfSigned: true, Compress: true})
+	e.store.AddHostFull(ctx, store.Host{Domain: "redir.example.com", Kind: "redirect", Target: "https://example.org", Code: 301, AccessListID: listID})
+
+	_, body := e.do("GET", "/hosts", nil)
+	rows := strings.Split(body, `<tr id="host-`)
+	var plain, full string
+	for _, r := range rows {
+		switch {
+		case strings.Contains(r, "plain.example.com"):
+			plain = r
+		case strings.Contains(r, "full.example.com"):
+			full = r
+		}
+	}
+	if strings.Contains(plain, `class="pill sm`) {
+		t.Errorf("un hôte sans option ne doit montrer aucune pastille : %s", plain)
+	}
+	for _, want := range []string{"Liste d&#39;accès : Bureau", "WAF", "HSTS", "HTTP seulement", "Certificat auto-signé"} {
+		if !strings.Contains(full, want) {
+			t.Errorf("pastille %q absente : %s", want, full)
+		}
+	}
+	if strings.Contains(full, "Compression") {
+		t.Error("les réglages de confort ne doivent pas apparaître")
+	}
+	_, redirs := e.do("GET", "/redirections", nil)
+	if strings.Contains(redirs, `class="pill sm`) {
+		t.Error("pas de pastilles sur les redirections")
+	}
+	_, en := e.do("GET", "/hosts", nil, "Accept-Language", "en")
+	if !strings.Contains(en, "Access list: Bureau") || !strings.Contains(en, "HTTP only") || !strings.Contains(en, "Self-signed certificate") {
+		t.Errorf("traduction anglaise absente : %s", en)
+	}
+}

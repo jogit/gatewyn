@@ -407,7 +407,11 @@ type hostView struct {
 	Dest        string // cible ou destination affichée
 	CertProblem string // échec d'obtention du certificat, en clair (vide : aucun)
 	IsProxy     bool
+	Tags        []tagView // options qui comptent pour l'accès ou la sécurité (service seulement)
 }
+
+// tagView : une pastille d'option sous l'adresse d'un hôte.
+type tagView struct{ Class, Label string }
 
 type resultView struct{ Class, Label, Message string }
 
@@ -452,9 +456,18 @@ func (s *Server) hostsList(w http.ResponseWriter, r *http.Request, kind string) 
 	p := s.authedPage(r, listTitles[kind], kind)
 	p.Kind, p.ListPath = kind, listPath(kind)
 	p.Query = strings.TrimSpace(r.URL.Query().Get("q"))
+	lists, err := s.cfg.Store.AccessLists(r.Context())
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	listNames := map[int64]string{}
+	for _, l := range lists {
+		listNames[l.ID] = l.Name
+	}
 	for _, h := range hosts {
 		if kindFromForm(h.Kind) == kind && matches(h, p.Query) {
-			v := toView(h)
+			v := toView(h, listNames)
 			v.CertProblem = s.certProblem(h)
 			p.Hosts = append(p.Hosts, v)
 		}
