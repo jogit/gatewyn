@@ -9,7 +9,7 @@
 name: gatewyn
 services:
   gatewyn:
-    image: ghcr.io/jogit/gatewyn:1.1.0
+    image: ghcr.io/jogit/gatewyn:1.1.1
     restart: unless-stopped
     ports:
       - "8088:8080" # administration interface: private network only
