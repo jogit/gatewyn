@@ -90,6 +90,8 @@ var migrations = []string{
 	 ALTER TABLE hosts ADD COLUMN noindex INTEGER NOT NULL DEFAULT 0;`,
 	// 14 : WAF (CrowdSec AppSec) activé pour un hôte.
 	`ALTER TABLE hosts ADD COLUMN waf INTEGER NOT NULL DEFAULT 0;`,
+	// 15 : ne pas vérifier le certificat HTTPS du service.
+	`ALTER TABLE hosts ADD COLUMN tls_skip_verify INTEGER NOT NULL DEFAULT 0;`,
 }
 
 // Version est la version de schéma que ce code attend.
@@ -146,6 +148,9 @@ type Host struct {
 
 	// Service : les requêtes passent par le WAF de CrowdSec (AppSec).
 	WAF bool
+
+	// Service : le certificat HTTPS du service n'est pas vérifié.
+	TLSSkipVerify bool
 
 	// En-têtes de réponse : X-Frame-Options (« », « SAMEORIGIN » ou « DENY ») et X-Robots-Tag: noindex.
 	FrameOptions string
@@ -297,19 +302,19 @@ func (s *Store) PurgeSessions(ctx context.Context) error {
 
 // --- hôtes ---
 
-const hostColumns = "id, domain, kind, target, disabled, created_at, code, preserve_path, COALESCE(access_list_id, 0), COALESCE(dns_account_id, 0), http_only, aliases, hsts, self_signed, locations, compress, no_buffering, frame_options, noindex, waf"
+const hostColumns = "id, domain, kind, target, disabled, created_at, code, preserve_path, COALESCE(access_list_id, 0), COALESCE(dns_account_id, 0), http_only, aliases, hsts, self_signed, locations, compress, no_buffering, frame_options, noindex, waf, tls_skip_verify"
 
 func scanHost(r scanner) (Host, error) {
 	var h Host
-	var dis, keep, httpOnly, selfSigned, compress, noBuffering, noIndex, waf int
+	var dis, keep, httpOnly, selfSigned, compress, noBuffering, noIndex, waf, skipVerify int
 	var aliases, locations string
 	var at int64
-	if err := r.Scan(&h.ID, &h.Domain, &h.Kind, &h.Target, &dis, &at, &h.Code, &keep, &h.AccessListID, &h.DNSAccountID, &httpOnly, &aliases, &h.HSTS, &selfSigned, &locations, &compress, &noBuffering, &h.FrameOptions, &noIndex, &waf); err != nil {
+	if err := r.Scan(&h.ID, &h.Domain, &h.Kind, &h.Target, &dis, &at, &h.Code, &keep, &h.AccessListID, &h.DNSAccountID, &httpOnly, &aliases, &h.HSTS, &selfSigned, &locations, &compress, &noBuffering, &h.FrameOptions, &noIndex, &waf, &skipVerify); err != nil {
 		return Host{}, err
 	}
 	h.Aliases = strings.Fields(aliases)
 	h.Locations = decodeLocations(locations)
-	h.Compress, h.NoBuffering, h.NoIndex, h.WAF = compress != 0, noBuffering != 0, noIndex != 0, waf != 0
+	h.Compress, h.NoBuffering, h.NoIndex, h.WAF, h.TLSSkipVerify = compress != 0, noBuffering != 0, noIndex != 0, waf != 0, skipVerify != 0
 	h.Disabled, h.PreservePath, h.HTTPOnly, h.SelfSigned, h.CreatedAt = dis != 0, keep != 0, httpOnly != 0, selfSigned != 0, time.Unix(at, 0)
 	return h, nil
 }
@@ -345,8 +350,8 @@ func (s *Store) AddHostFull(ctx context.Context, h Host) (int64, error) {
 		h.Kind = "proxy"
 	}
 	res, err := s.db.ExecContext(ctx,
-		"INSERT INTO hosts (domain, kind, target, code, preserve_path, access_list_id, dns_account_id, http_only, aliases, hsts, self_signed, locations, compress, no_buffering, frame_options, noindex, waf, created_at) VALUES (?, ?, ?, ?, ?, NULLIF(?, 0), NULLIF(?, 0), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		h.Domain, h.Kind, h.Target, h.Code, boolInt(h.PreservePath), h.AccessListID, h.DNSAccountID, boolInt(h.HTTPOnly), strings.Join(h.Aliases, "\n"), h.HSTS, boolInt(h.SelfSigned), encodeLocations(h.Locations), boolInt(h.Compress), boolInt(h.NoBuffering), h.FrameOptions, boolInt(h.NoIndex), boolInt(h.WAF), s.now().Unix())
+		"INSERT INTO hosts (domain, kind, target, code, preserve_path, access_list_id, dns_account_id, http_only, aliases, hsts, self_signed, locations, compress, no_buffering, frame_options, noindex, waf, tls_skip_verify, created_at) VALUES (?, ?, ?, ?, ?, NULLIF(?, 0), NULLIF(?, 0), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		h.Domain, h.Kind, h.Target, h.Code, boolInt(h.PreservePath), h.AccessListID, h.DNSAccountID, boolInt(h.HTTPOnly), strings.Join(h.Aliases, "\n"), h.HSTS, boolInt(h.SelfSigned), encodeLocations(h.Locations), boolInt(h.Compress), boolInt(h.NoBuffering), h.FrameOptions, boolInt(h.NoIndex), boolInt(h.WAF), boolInt(h.TLSSkipVerify), s.now().Unix())
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {
 			return 0, ErrExists
@@ -435,8 +440,8 @@ func (s *Store) RecentAudit(ctx context.Context, n int) ([]AuditEntry, error) {
 // UpdateHostFull remplace le domaine, la destination et les options d'un hôte ;
 // le type et l'état (désactivé) ne changent pas.
 func (s *Store) UpdateHostFull(ctx context.Context, id int64, h Host) error {
-	res, err := s.db.ExecContext(ctx, "UPDATE hosts SET domain = ?, target = ?, code = ?, preserve_path = ?, access_list_id = NULLIF(?, 0), dns_account_id = NULLIF(?, 0), http_only = ?, aliases = ?, hsts = ?, self_signed = ?, locations = ?, compress = ?, no_buffering = ?, frame_options = ?, noindex = ?, waf = ? WHERE id = ?",
-		h.Domain, h.Target, h.Code, boolInt(h.PreservePath), h.AccessListID, h.DNSAccountID, boolInt(h.HTTPOnly), strings.Join(h.Aliases, "\n"), h.HSTS, boolInt(h.SelfSigned), encodeLocations(h.Locations), boolInt(h.Compress), boolInt(h.NoBuffering), h.FrameOptions, boolInt(h.NoIndex), boolInt(h.WAF), id)
+	res, err := s.db.ExecContext(ctx, "UPDATE hosts SET domain = ?, target = ?, code = ?, preserve_path = ?, access_list_id = NULLIF(?, 0), dns_account_id = NULLIF(?, 0), http_only = ?, aliases = ?, hsts = ?, self_signed = ?, locations = ?, compress = ?, no_buffering = ?, frame_options = ?, noindex = ?, waf = ?, tls_skip_verify = ? WHERE id = ?",
+		h.Domain, h.Target, h.Code, boolInt(h.PreservePath), h.AccessListID, h.DNSAccountID, boolInt(h.HTTPOnly), strings.Join(h.Aliases, "\n"), h.HSTS, boolInt(h.SelfSigned), encodeLocations(h.Locations), boolInt(h.Compress), boolInt(h.NoBuffering), h.FrameOptions, boolInt(h.NoIndex), boolInt(h.WAF), boolInt(h.TLSSkipVerify), id)
 	if err != nil && strings.Contains(err.Error(), "UNIQUE") {
 		return ErrExists
 	}

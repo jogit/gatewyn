@@ -56,6 +56,9 @@ type Host struct {
 	// Les requêtes passent par le bouncer CrowdSec avant d'être servies.
 	CrowdSec bool
 
+	// Service : le certificat HTTPS du service (et de ses chemins) n'est pas vérifié.
+	TLSSkipVerify bool
+
 	// Service : les requêtes passent aussi par le WAF de CrowdSec (AppSec). Sans effet
 	// si CrowdSec n'est pas actif.
 	WAF bool
@@ -338,7 +341,7 @@ func buildRoute(h Host) (Route, error) {
 		}
 		switch {
 		case tls:
-			rp.Transport = &transport{Protocol: "http", TLS: &struct{}{}}
+			rp.Transport = &transport{Protocol: "http", TLS: &transportTLS{InsecureSkipVerify: h.TLSSkipVerify}}
 		case IsH2C(h.Target):
 			rp.Transport = &transport{Protocol: "http", Versions: []string{"h2c"}}
 		}

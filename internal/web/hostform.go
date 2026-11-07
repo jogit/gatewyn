@@ -35,6 +35,7 @@ type formInput struct {
 
 	Compress, NoBuffering bool   // service : compression, streaming sans tampon
 	WAF                   bool   // service : WAF CrowdSec AppSec
+	TLSSkipVerify         bool   // service : certificat HTTPS de la cible non vérifié
 	FrameOptions          string // « », « SAMEORIGIN » ou « DENY »
 	NoIndex               bool
 
@@ -86,6 +87,7 @@ func readForm(r *http.Request, kind string) formInput {
 		f.Locations, f.locationsErr = readLocations(r)
 		f.Compress, f.NoBuffering = r.PostFormValue("compress") == "1", r.PostFormValue("no_buffering") == "1"
 		f.WAF = r.PostFormValue("waf") == "1"
+		f.TLSSkipVerify = r.PostFormValue("tls_skip_verify") == "1"
 	}
 	switch kind {
 	case caddyconf.KindNotFound:
@@ -210,11 +212,11 @@ func domainsText(domain string, aliases []string) string {
 }
 
 func (f formInput) store() store.Host {
-	return store.Host{Domain: f.Domain, Aliases: f.Aliases, Kind: f.Kind, Target: f.Target, Code: f.Code, PreservePath: f.Preserve, AccessListID: f.Access, DNSAccountID: f.DNS, HTTPOnly: f.HTTPOnly, SelfSigned: f.SelfSigned, HSTS: f.HSTS, Locations: f.Locations, Compress: f.Compress, NoBuffering: f.NoBuffering, FrameOptions: f.FrameOptions, NoIndex: f.NoIndex, WAF: f.WAF}
+	return store.Host{Domain: f.Domain, Aliases: f.Aliases, Kind: f.Kind, Target: f.Target, Code: f.Code, PreservePath: f.Preserve, AccessListID: f.Access, DNSAccountID: f.DNS, HTTPOnly: f.HTTPOnly, SelfSigned: f.SelfSigned, HSTS: f.HSTS, Locations: f.Locations, Compress: f.Compress, NoBuffering: f.NoBuffering, FrameOptions: f.FrameOptions, NoIndex: f.NoIndex, WAF: f.WAF, TLSSkipVerify: f.TLSSkipVerify}
 }
 
 func (f formInput) same(h store.Host) bool {
-	return f.Domain == h.Domain && slices.Equal(f.Aliases, h.Aliases) && f.Target == h.Target && f.Code == h.Code && f.Preserve == h.PreservePath && f.Access == h.AccessListID && f.DNS == h.DNSAccountID && slices.Equal(f.Locations, h.Locations) && f.Compress == h.Compress && f.NoBuffering == h.NoBuffering && f.FrameOptions == h.FrameOptions && f.NoIndex == h.NoIndex && f.WAF == h.WAF && f.HTTPOnly == h.HTTPOnly && f.SelfSigned == h.SelfSigned && f.HSTS == h.HSTS
+	return f.Domain == h.Domain && slices.Equal(f.Aliases, h.Aliases) && f.Target == h.Target && f.Code == h.Code && f.Preserve == h.PreservePath && f.Access == h.AccessListID && f.DNS == h.DNSAccountID && slices.Equal(f.Locations, h.Locations) && f.Compress == h.Compress && f.NoBuffering == h.NoBuffering && f.FrameOptions == h.FrameOptions && f.NoIndex == h.NoIndex && f.WAF == h.WAF && f.TLSSkipVerify == h.TLSSkipVerify && f.HTTPOnly == h.HTTPOnly && f.SelfSigned == h.SelfSigned && f.HSTS == h.HSTS
 }
 
 // problems renvoie les erreurs de format de la saisie (jamais contournables).
@@ -277,7 +279,7 @@ func (s *Server) runChecks(ctx context.Context, f formInput) (results []checks.R
 	dns := s.checkAllDNS(ctx, f.domains(), &wg)
 	if f.Kind == caddyconf.KindProxy && f.Target != "" && !hasCode(formatErrs, "target_invalid") {
 		wg.Add(1)
-		go func() { defer wg.Done(); r := s.cfg.CheckTarget(ctx, f.Target); tgt = &r }()
+		go func() { defer wg.Done(); r := s.cfg.CheckTarget(ctx, f.Target, f.TLSSkipVerify); tgt = &r }()
 	}
 	wg.Wait()
 	results = append(results, formatErrs...)
@@ -341,7 +343,7 @@ func (s *Server) formPage(r *http.Request, old *store.Host, kind string) page {
 	}
 	if old != nil {
 		p.LocRows, p.HasLocations = s.locRows(r.Context(), old.Locations), len(old.Locations) > 0
-		p.Compress, p.NoBuffering, p.FrameOptions, p.NoIndex, p.WAF = old.Compress, old.NoBuffering, old.FrameOptions, old.NoIndex, old.WAF
+		p.Compress, p.NoBuffering, p.FrameOptions, p.NoIndex, p.WAF, p.TLSSkipVerify = old.Compress, old.NoBuffering, old.FrameOptions, old.NoIndex, old.WAF, old.TLSSkipVerify
 		p.AccessID, p.DNSID, p.HTTPOnly, p.SelfSigned, p.HSTS = old.AccessListID, old.DNSAccountID, old.HTTPOnly, old.SelfSigned, old.HSTS
 		p.Title, p.Editing = "Modifier "+old.Domain, true
 		p.EditID, p.EditDisabled = old.ID, old.Disabled
@@ -423,7 +425,7 @@ func (s *Server) checkTarget(w http.ResponseWriter, r *http.Request) {
 	} else {
 		ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
 		defer cancel()
-		res = s.cfg.CheckTarget(ctx, f.Target)
+		res = s.cfg.CheckTarget(ctx, f.Target, f.TLSSkipVerify)
 	}
 	s.renderFragment(w, "new", "checks", viewResults([]checks.Result{res}))
 }
@@ -461,8 +463,15 @@ func caddyfilePreview(f formInput, lists map[int64][]string) string {
 		}
 		proxy := func(target string) string {
 			line := "reverse_proxy " + dialOf(target)
+			var opts []string
 			if f.NoBuffering {
-				line = "reverse_proxy " + dialOf(target) + " {\n    flush_interval -1\n  }"
+				opts = append(opts, "flush_interval -1")
+			}
+			if _, tls, _ := caddyconf.ParseTarget(target); tls && f.TLSSkipVerify {
+				opts = append(opts, "transport http {\n      tls_insecure_skip_verify\n    }")
+			}
+			if len(opts) > 0 {
+				line += " {\n    " + strings.Join(opts, "\n    ") + "\n  }"
 			}
 			return line
 		}
@@ -561,7 +570,7 @@ func (s *Server) saveHost(w http.ResponseWriter, r *http.Request, old *store.Hos
 	f := readForm(r, kind)
 	p := s.formPage(r, old, kind)
 	p.LocRows, p.HasLocations = s.locRows(ctx, f.Locations), len(f.Locations) > 0
-	p.Compress, p.NoBuffering, p.FrameOptions, p.NoIndex, p.WAF = f.Compress, f.NoBuffering, f.FrameOptions, f.NoIndex, f.WAF
+	p.Compress, p.NoBuffering, p.FrameOptions, p.NoIndex, p.WAF, p.TLSSkipVerify = f.Compress, f.NoBuffering, f.FrameOptions, f.NoIndex, f.WAF, f.TLSSkipVerify
 	p.Domain, p.Target, p.Preserve, p.AccessID, p.DNSID, p.HTTPOnly, p.SelfSigned, p.HSTS = domainsText(f.Domain, f.Aliases), f.Target, f.Preserve, f.Access, f.DNS, f.HTTPOnly, f.SelfSigned, f.HSTS
 	if f.Kind == caddyconf.KindRedirect {
 		p.Code = f.Code

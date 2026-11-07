@@ -153,6 +153,8 @@ var uiEntries = []entry{
 	{"Performances", "Performance"},
 	{"Désactiver le buffering (streaming)", "Disable buffering (streaming)"},
 	{"Pour les flux en direct, SSE, vidéo", "For live streams, SSE, video"},
+	{"Ne pas vérifier le certificat du service", "Do not verify the service certificate"},
+	{"Pour un service en https:// à certificat auto-signé ou expiré (NAS, routeur). À réserver à un réseau de confiance.", "For an https:// service with a self-signed or expired certificate (NAS, router). Only on a trusted network."},
 	{"Enregistrer quand même", "Save anyway"},
 	{"Créer quand même", "Create anyway"},
 	{"Enregistrer", "Save"},

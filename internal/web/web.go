@@ -77,7 +77,7 @@ type Config struct {
 	Logger             *slog.Logger
 	// Remplaçables dans les tests.
 	CheckDNS    func(ctx context.Context, domain string) checks.Result
-	CheckTarget func(ctx context.Context, target string) checks.Result
+	CheckTarget func(ctx context.Context, target string, skipVerify bool) checks.Result
 	Now         func() time.Time
 }
 
@@ -510,7 +510,7 @@ func (s *Server) hostStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 6*time.Second)
 	defer cancel()
-	res := s.cfg.CheckTarget(ctx, h.Target)
+	res := s.cfg.CheckTarget(ctx, h.Target, h.TLSSkipVerify)
 	v := view(res)
 	label := "En ligne"
 	switch res.Status {
@@ -648,7 +648,7 @@ func (s *Server) sync(ctx context.Context) error {
 	}
 	out := make([]caddyconf.Host, len(hosts))
 	for i, h := range hosts {
-		out[i] = caddyconf.Host{WAF: h.WAF && cs != nil && cs.AppSecURL != "", Compress: h.Compress, NoBuffering: h.NoBuffering, FrameOptions: h.FrameOptions, NoIndex: h.NoIndex, CrowdSec: cs != nil, DNS: dns[h.DNSAccountID], Domain: h.Domain, Kind: h.Kind, Target: h.Target, Disabled: h.Disabled, Code: h.Code, Aliases: h.Aliases, HSTS: h.HSTS, PreservePath: h.PreservePath, HTTPOnly: h.HTTPOnly, SelfSigned: h.SelfSigned, Locations: confLocations(h.Locations, access), Access: access[h.AccessListID]}
+		out[i] = caddyconf.Host{WAF: h.WAF && cs != nil && cs.AppSecURL != "", Compress: h.Compress, NoBuffering: h.NoBuffering, TLSSkipVerify: h.TLSSkipVerify, FrameOptions: h.FrameOptions, NoIndex: h.NoIndex, CrowdSec: cs != nil, DNS: dns[h.DNSAccountID], Domain: h.Domain, Kind: h.Kind, Target: h.Target, Disabled: h.Disabled, Code: h.Code, Aliases: h.Aliases, HSTS: h.HSTS, PreservePath: h.PreservePath, HTTPOnly: h.HTTPOnly, SelfSigned: h.SelfSigned, Locations: confLocations(h.Locations, access), Access: access[h.AccessListID]}
 	}
 	accessLog, err := s.accessLog(ctx)
 	if err != nil {
@@ -744,6 +744,7 @@ type page struct {
 	WAFAvailable     bool       // formulaire d'hôte : AppSec est connecté
 	Compress         bool
 	NoBuffering      bool
+	TLSSkipVerify    bool
 	NoIndex          bool
 	FrameOptions     string
 	RootCert         bool // le certificat racine de Caddy existe et peut être téléchargé

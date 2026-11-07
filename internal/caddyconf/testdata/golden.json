@@ -70,6 +70,10 @@
           "host": [
            "wiki.example.com"
           ],
+          "path": [
+           "/api/v2",
+           "/api/v2/*"
+          ],
           "not": [
            {
             "client_ip": {
@@ -78,18 +82,14 @@
              ]
             }
            }
-          ],
-          "path": [
-           "/api/v2",
-           "/api/v2/*"
           ]
          }
         ],
         "handle": [
          {
-          "body": "403 Forbidden",
           "handler": "static_response",
-          "status_code": 403
+          "status_code": 403,
+          "body": "403 Forbidden"
          }
         ],
         "terminal": true
@@ -196,6 +196,10 @@
           "host": [
            "wiki.example.com"
           ],
+          "path": [
+           "/static",
+           "/static/*"
+          ],
           "not": [
            {
             "client_ip": {
@@ -204,18 +208,14 @@
              ]
             }
            }
-          ],
-          "path": [
-           "/static",
-           "/static/*"
           ]
          }
         ],
         "handle": [
          {
-          "body": "403 Forbidden",
           "handler": "static_response",
-          "status_code": 403
+          "status_code": 403,
+          "body": "403 Forbidden"
          }
         ],
         "terminal": true
@@ -273,6 +273,10 @@
          {
           "host": [
            "wiki.example.com"
+          ],
+          "path": [
+           "/admin",
+           "/admin/*"
           ],
           "not": [
            {
@@ -282,18 +286,14 @@
              ]
             }
            }
-          ],
-          "path": [
-           "/admin",
-           "/admin/*"
           ]
          }
         ],
         "handle": [
          {
-          "body": "403 Forbidden",
           "handler": "static_response",
-          "status_code": 403
+          "status_code": 403,
+          "body": "403 Forbidden"
          }
         ],
         "terminal": true
@@ -352,6 +352,10 @@
           "host": [
            "wiki.example.com"
           ],
+          "path": [
+           "/api",
+           "/api/*"
+          ],
           "not": [
            {
             "client_ip": {
@@ -360,18 +364,14 @@
              ]
             }
            }
-          ],
-          "path": [
-           "/api",
-           "/api/*"
           ]
          }
         ],
         "handle": [
          {
-          "body": "403 Forbidden",
           "handler": "static_response",
-          "status_code": 403
+          "status_code": 403,
+          "body": "403 Forbidden"
          }
         ],
         "terminal": true
@@ -419,15 +419,15 @@
          },
          {
           "handler": "reverse_proxy",
-          "transport": {
-           "protocol": "http",
-           "tls": {}
-          },
           "upstreams": [
            {
             "dial": "192.0.2.6:8443"
            }
-          ]
+          ],
+          "transport": {
+           "protocol": "http",
+           "tls": {}
+          }
          }
         ],
         "terminal": true
@@ -451,9 +451,9 @@
         ],
         "handle": [
          {
-          "body": "403 Forbidden",
           "handler": "static_response",
-          "status_code": 403
+          "status_code": 403,
+          "body": "403 Forbidden"
          }
         ],
         "terminal": true
@@ -527,9 +527,9 @@
         ],
         "handle": [
          {
-          "body": "404 Not Found",
           "handler": "static_response",
-          "status_code": 404
+          "status_code": 404,
+          "body": "404 Not Found"
          }
         ],
         "terminal": true
@@ -647,9 +647,9 @@
           }
          },
          {
-          "body": "404 Not Found",
           "handler": "static_response",
-          "status_code": 404
+          "status_code": 404,
+          "body": "404 Not Found"
          }
         ],
         "terminal": true
@@ -754,9 +754,9 @@
         ],
         "handle": [
          {
-          "body": "404 Not Found",
           "handler": "static_response",
-          "status_code": 404
+          "status_code": 404,
+          "body": "404 Not Found"
          }
         ],
         "terminal": true
@@ -772,12 +772,12 @@
         "handle": [
          {
           "handler": "static_response",
+          "status_code": 301,
           "headers": {
            "Location": [
             "https://x.example.org{http.request.uri}"
            ]
-          },
-          "status_code": 301
+          }
          }
         ],
         "terminal": true
@@ -817,9 +817,9 @@
         ],
         "handle": [
          {
-          "body": "403 Forbidden",
           "handler": "static_response",
-          "status_code": 403
+          "status_code": 403,
+          "body": "403 Forbidden"
          }
         ],
         "terminal": true
@@ -956,17 +956,17 @@
         "handle": [
          {
           "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.31:50051"
+           }
+          ],
           "transport": {
            "protocol": "http",
            "versions": [
             "h2c"
            ]
-          },
-          "upstreams": [
-           {
-            "dial": "192.0.2.31:50051"
-           }
-          ]
+          }
          }
         ],
         "terminal": true
@@ -1045,15 +1045,56 @@
         "handle": [
          {
           "handler": "reverse_proxy",
-          "transport": {
-           "protocol": "http",
-           "tls": {}
-          },
           "upstreams": [
            {
             "dial": "192.0.2.30:443"
            }
+          ],
+          "transport": {
+           "protocol": "http",
+           "tls": {}
+          }
+         }
+        ],
+        "terminal": true
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "configuration complète / proxy https sans verification": {
+  "apps": {
+   "http": {
+    "servers": {
+     "gatewyn": {
+      "listen": [
+       ":443"
+      ],
+      "routes": [
+       {
+        "match": [
+         {
+          "host": [
+           "nas.example.com"
           ]
+         }
+        ],
+        "handle": [
+         {
+          "handler": "reverse_proxy",
+          "upstreams": [
+           {
+            "dial": "192.0.2.30:443"
+           }
+          ],
+          "transport": {
+           "protocol": "http",
+           "tls": {
+            "insecure_skip_verify": true
+           }
+          }
          }
         ],
         "terminal": true
@@ -1110,13 +1151,13 @@
           ]
          },
          {
-          "flush_interval": -1,
           "handler": "reverse_proxy",
           "upstreams": [
            {
             "dial": "192.0.2.22:3000"
            }
-          ]
+          ],
+          "flush_interval": -1
          }
         ],
         "terminal": true
@@ -1233,12 +1274,12 @@
         "handle": [
          {
           "handler": "static_response",
+          "status_code": 301,
           "headers": {
            "Location": [
             "https://new.example.org{http.request.uri}"
            ]
-          },
-          "status_code": 301
+          }
          }
         ],
         "terminal": true
@@ -1283,12 +1324,12 @@
          },
          {
           "handler": "static_response",
+          "status_code": 302,
           "headers": {
            "Location": [
             "https://new.example.org/"
            ]
-          },
-          "status_code": 302
+          }
          }
         ],
         "terminal": true
@@ -1328,12 +1369,12 @@
  },
  "journal / journal": {
   "writer": {
-   "filename": "/data/logs/access.log",
    "output": "file",
+   "filename": "/data/logs/access.log",
    "roll": true,
+   "roll_size_mb": 100,
    "roll_keep": 1000,
-   "roll_keep_days": 30,
-   "roll_size_mb": 100
+   "roll_keep_days": 30
   },
   "encoder": {
    "format": "json"
@@ -1344,12 +1385,12 @@
  },
  "journal / tout": {
   "writer": {
-   "filename": "/tmp/a.log",
    "output": "file",
+   "filename": "/tmp/a.log",
    "roll": true,
+   "roll_size_mb": 100,
    "roll_keep": 1000,
-   "roll_keep_days": 7,
-   "roll_size_mb": 100
+   "roll_keep_days": 7
   },
   "encoder": {
    "format": "json"
@@ -1499,11 +1540,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -1560,16 +1601,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTP / melange": {
   "listen": [
@@ -1682,11 +1723,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -1743,16 +1784,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTP / proxy acces": null,
  "serveur HTTP / proxy acces / crowdsec appsec": null,
@@ -1790,6 +1831,12 @@
  "serveur HTTP / proxy https / proxies": null,
  "serveur HTTP / proxy https / sans reglage": null,
  "serveur HTTP / proxy https / tout": null,
+ "serveur HTTP / proxy https sans verification": null,
+ "serveur HTTP / proxy https sans verification / crowdsec appsec": null,
+ "serveur HTTP / proxy https sans verification / journal": null,
+ "serveur HTTP / proxy https sans verification / proxies": null,
+ "serveur HTTP / proxy https sans verification / sans reglage": null,
+ "serveur HTTP / proxy https sans verification / tout": null,
  "serveur HTTP / proxy options": null,
  "serveur HTTP / proxy options / crowdsec appsec": null,
  "serveur HTTP / proxy options / journal": null,
@@ -2021,11 +2068,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -2124,16 +2171,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / chemins": {
   "listen": [
@@ -2146,6 +2193,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -2154,18 +2205,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api/v2",
-       "/api/v2/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2272,6 +2319,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/static",
+       "/static/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -2280,18 +2331,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/static",
-       "/static/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2349,6 +2396,10 @@
      {
       "host": [
        "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
       ],
       "not": [
        {
@@ -2358,18 +2409,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/admin",
-       "/admin/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2428,6 +2475,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api",
+       "/api/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -2436,18 +2487,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api",
-       "/api/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2495,15 +2542,15 @@
      },
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.6:8443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -2527,9 +2574,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2591,6 +2638,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -2599,18 +2650,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api/v2",
-       "/api/v2/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2717,6 +2764,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/static",
+       "/static/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -2725,18 +2776,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/static",
-       "/static/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2794,6 +2841,10 @@
      {
       "host": [
        "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
       ],
       "not": [
        {
@@ -2803,18 +2854,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/admin",
-       "/admin/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2873,6 +2920,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api",
+       "/api/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -2881,18 +2932,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api",
-       "/api/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -2940,15 +2987,15 @@
      },
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.6:8443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -2972,9 +3019,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3036,6 +3083,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -3044,18 +3095,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api/v2",
-       "/api/v2/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3162,6 +3209,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/static",
+       "/static/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -3170,18 +3221,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/static",
-       "/static/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3239,6 +3286,10 @@
      {
       "host": [
        "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
       ],
       "not": [
        {
@@ -3248,18 +3299,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/admin",
-       "/admin/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3318,6 +3365,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api",
+       "/api/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -3326,18 +3377,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api",
-       "/api/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3385,15 +3432,15 @@
      },
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.6:8443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -3417,9 +3464,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3484,6 +3531,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -3492,18 +3543,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api/v2",
-       "/api/v2/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3610,6 +3657,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/static",
+       "/static/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -3618,18 +3669,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/static",
-       "/static/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3687,6 +3734,10 @@
      {
       "host": [
        "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
       ],
       "not": [
        {
@@ -3696,18 +3747,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/admin",
-       "/admin/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3766,6 +3813,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api",
+       "/api/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -3774,18 +3825,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api",
-       "/api/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3833,15 +3880,15 @@
      },
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.6:8443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -3865,9 +3912,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -3918,11 +3965,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -3937,6 +3984,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -3945,18 +3996,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api/v2",
-       "/api/v2/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4063,6 +4110,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/static",
+       "/static/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -4071,18 +4122,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/static",
-       "/static/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4140,6 +4187,10 @@
      {
       "host": [
        "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
       ],
       "not": [
        {
@@ -4149,18 +4200,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/admin",
-       "/admin/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4219,6 +4266,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api",
+       "/api/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -4227,18 +4278,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api",
-       "/api/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4286,15 +4333,15 @@
      },
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.6:8443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -4318,9 +4365,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4382,6 +4429,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api/v2",
+       "/api/v2/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -4390,18 +4441,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api/v2",
-       "/api/v2/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4508,6 +4555,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/static",
+       "/static/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -4516,18 +4567,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/static",
-       "/static/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4585,6 +4632,10 @@
      {
       "host": [
        "wiki.example.com"
+      ],
+      "path": [
+       "/admin",
+       "/admin/*"
       ],
       "not": [
        {
@@ -4594,18 +4645,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/admin",
-       "/admin/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4664,6 +4711,10 @@
       "host": [
        "wiki.example.com"
       ],
+      "path": [
+       "/api",
+       "/api/*"
+      ],
       "not": [
        {
         "client_ip": {
@@ -4672,18 +4723,14 @@
          ]
         }
        }
-      ],
-      "path": [
-       "/api",
-       "/api/*"
       ]
      }
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4731,15 +4778,15 @@
      },
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.6:8443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -4763,9 +4810,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -4815,16 +4862,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / defi dns": {
   "listen": [
@@ -4841,9 +4888,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -4905,9 +4952,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -4969,9 +5016,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5036,9 +5083,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5085,11 +5132,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -5108,9 +5155,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5172,9 +5219,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5220,16 +5267,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / desactive": {
   "listen": [
@@ -5342,11 +5389,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -5403,16 +5450,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / erreur 404": {
   "listen": [
@@ -5442,9 +5489,9 @@
       }
      },
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5479,9 +5526,9 @@
       }
      },
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5516,9 +5563,9 @@
       }
      },
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5556,20 +5603,20 @@
       }
      },
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -5601,9 +5648,9 @@
       }
      },
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5638,24 +5685,24 @@
       }
      },
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / http seulement": {
   "listen": [
@@ -5768,11 +5815,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -5829,16 +5876,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / melange": {
   "listen": [
@@ -5895,9 +5942,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5913,12 +5960,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://x.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -5980,9 +6027,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -5998,12 +6045,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://x.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -6065,9 +6112,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -6083,12 +6130,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://x.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -6153,9 +6200,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -6171,23 +6218,23 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://x.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -6246,9 +6293,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -6264,12 +6311,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://x.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -6331,9 +6378,9 @@
     ],
     "handle": [
      {
-      "body": "404 Not Found",
       "handler": "static_response",
-      "status_code": 404
+      "status_code": 404,
+      "body": "404 Not Found"
      }
     ],
     "terminal": true
@@ -6349,27 +6396,27 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://x.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy acces": {
   "listen": [
@@ -6396,9 +6443,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -6450,9 +6497,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -6504,9 +6551,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -6561,9 +6608,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -6590,11 +6637,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -6623,9 +6670,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -6677,9 +6724,9 @@
     ],
     "handle": [
      {
-      "body": "403 Forbidden",
       "handler": "static_response",
-      "status_code": 403
+      "status_code": 403,
+      "body": "403 Forbidden"
      }
     ],
     "terminal": true
@@ -6705,16 +6752,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy alias": {
   "listen": [
@@ -6835,11 +6882,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -6900,16 +6947,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy crowdsec": {
   "listen": [
@@ -7078,11 +7125,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -7167,16 +7214,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy h2c": {
   "listen": [
@@ -7194,17 +7241,17 @@
     "handle": [
      {
       "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ],
       "transport": {
        "protocol": "http",
        "versions": [
         "h2c"
        ]
-      },
-      "upstreams": [
-       {
-        "dial": "192.0.2.31:50051"
-       }
-      ]
+      }
      }
     ],
     "terminal": true
@@ -7227,17 +7274,17 @@
     "handle": [
      {
       "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ],
       "transport": {
        "protocol": "http",
        "versions": [
         "h2c"
        ]
-      },
-      "upstreams": [
-       {
-        "dial": "192.0.2.31:50051"
-       }
-      ]
+      }
      }
     ],
     "terminal": true
@@ -7260,17 +7307,17 @@
     "handle": [
      {
       "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ],
       "transport": {
        "protocol": "http",
        "versions": [
         "h2c"
        ]
-      },
-      "upstreams": [
-       {
-        "dial": "192.0.2.31:50051"
-       }
-      ]
+      }
      }
     ],
     "terminal": true
@@ -7296,28 +7343,28 @@
     "handle": [
      {
       "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ],
       "transport": {
        "protocol": "http",
        "versions": [
         "h2c"
        ]
-      },
-      "upstreams": [
-       {
-        "dial": "192.0.2.31:50051"
-       }
-      ]
+      }
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -7337,17 +7384,17 @@
     "handle": [
      {
       "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ],
       "transport": {
        "protocol": "http",
        "versions": [
         "h2c"
        ]
-      },
-      "upstreams": [
-       {
-        "dial": "192.0.2.31:50051"
-       }
-      ]
+      }
      }
     ],
     "terminal": true
@@ -7370,32 +7417,32 @@
     "handle": [
      {
       "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.31:50051"
+       }
+      ],
       "transport": {
        "protocol": "http",
        "versions": [
         "h2c"
        ]
-      },
-      "upstreams": [
-       {
-        "dial": "192.0.2.31:50051"
-       }
-      ]
+      }
      }
     ],
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy hsts simple": {
   "listen": [
@@ -7560,11 +7607,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -7647,16 +7694,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy https": {
   "listen": [
@@ -7674,15 +7721,15 @@
     "handle": [
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.30:443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -7705,15 +7752,15 @@
     "handle": [
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.30:443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -7736,15 +7783,15 @@
     "handle": [
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.30:443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -7770,26 +7817,26 @@
     "handle": [
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.30:443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -7809,15 +7856,15 @@
     "handle": [
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.30:443"
        }
-      ]
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
      }
     ],
     "terminal": true
@@ -7840,30 +7887,249 @@
     "handle": [
      {
       "handler": "reverse_proxy",
-      "transport": {
-       "protocol": "http",
-       "tls": {}
-      },
       "upstreams": [
        {
         "dial": "192.0.2.30:443"
        }
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {}
+      }
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy https sans verification": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
       ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {
+        "insecure_skip_verify": true
+       }
+      }
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy https sans verification / crowdsec appsec": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {
+        "insecure_skip_verify": true
+       }
+      }
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy https sans verification / journal": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {
+        "insecure_skip_verify": true
+       }
+      }
+     }
+    ],
+    "terminal": true
+   }
+  ],
+  "logs": {
+   "default_logger_name": "gatewyn_access"
+  }
+ },
+ "serveur HTTPS / proxy https sans verification / proxies": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {
+        "insecure_skip_verify": true
+       }
+      }
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
+    "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
-  "trusted_proxies_strict": 1,
+  "trusted_proxies_strict": 1
+ },
+ "serveur HTTPS / proxy https sans verification / sans reglage": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {
+        "insecure_skip_verify": true
+       }
+      }
+     }
+    ],
+    "terminal": true
+   }
+  ]
+ },
+ "serveur HTTPS / proxy https sans verification / tout": {
+  "listen": [
+   ":443"
+  ],
+  "routes": [
+   {
+    "match": [
+     {
+      "host": [
+       "nas.example.com"
+      ]
+     }
+    ],
+    "handle": [
+     {
+      "handler": "reverse_proxy",
+      "upstreams": [
+       {
+        "dial": "192.0.2.30:443"
+       }
+      ],
+      "transport": {
+       "protocol": "http",
+       "tls": {
+        "insecure_skip_verify": true
+       }
+      }
+     }
+    ],
+    "terminal": true
+   }
+  ],
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy options": {
   "listen": [
@@ -7907,13 +8173,13 @@
       ]
      },
      {
-      "flush_interval": -1,
       "handler": "reverse_proxy",
       "upstreams": [
        {
         "dial": "192.0.2.22:3000"
        }
-      ]
+      ],
+      "flush_interval": -1
      }
     ],
     "terminal": true
@@ -7962,13 +8228,13 @@
       ]
      },
      {
-      "flush_interval": -1,
       "handler": "reverse_proxy",
       "upstreams": [
        {
         "dial": "192.0.2.22:3000"
        }
-      ]
+      ],
+      "flush_interval": -1
      }
     ],
     "terminal": true
@@ -8017,13 +8283,13 @@
       ]
      },
      {
-      "flush_interval": -1,
       "handler": "reverse_proxy",
       "upstreams": [
        {
         "dial": "192.0.2.22:3000"
        }
-      ]
+      ],
+      "flush_interval": -1
      }
     ],
     "terminal": true
@@ -8075,24 +8341,24 @@
       ]
      },
      {
-      "flush_interval": -1,
       "handler": "reverse_proxy",
       "upstreams": [
        {
         "dial": "192.0.2.22:3000"
        }
-      ]
+      ],
+      "flush_interval": -1
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -8138,13 +8404,13 @@
       ]
      },
      {
-      "flush_interval": -1,
       "handler": "reverse_proxy",
       "upstreams": [
        {
         "dial": "192.0.2.22:3000"
        }
-      ]
+      ],
+      "flush_interval": -1
      }
     ],
     "terminal": true
@@ -8193,28 +8459,28 @@
       ]
      },
      {
-      "flush_interval": -1,
       "handler": "reverse_proxy",
       "upstreams": [
        {
         "dial": "192.0.2.22:3000"
        }
-      ]
+      ],
+      "flush_interval": -1
      }
     ],
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy simple": {
   "listen": [
@@ -8327,11 +8593,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -8388,16 +8654,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / proxy waf": {
   "listen": [
@@ -8574,11 +8840,11 @@
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -8667,16 +8933,16 @@
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / redirection permanente": {
   "listen": [
@@ -8694,12 +8960,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://new.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -8722,12 +8988,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://new.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -8750,12 +9016,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://new.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -8781,23 +9047,23 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://new.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -8817,12 +9083,12 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://new.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
@@ -8845,27 +9111,27 @@
     "handle": [
      {
       "handler": "static_response",
+      "status_code": 301,
       "headers": {
        "Location": [
         "https://new.example.org{http.request.uri}"
        ]
-      },
-      "status_code": 301
+      }
      }
     ],
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / redirection temporaire": {
   "listen": [
@@ -8897,12 +9163,12 @@
      },
      {
       "handler": "static_response",
+      "status_code": 302,
       "headers": {
        "Location": [
         "https://new.example.org/"
        ]
-      },
-      "status_code": 302
+      }
      }
     ],
     "terminal": true
@@ -8939,12 +9205,12 @@
      },
      {
       "handler": "static_response",
+      "status_code": 302,
       "headers": {
        "Location": [
         "https://new.example.org/"
        ]
-      },
-      "status_code": 302
+      }
      }
     ],
     "terminal": true
@@ -8981,12 +9247,12 @@
      },
      {
       "handler": "static_response",
+      "status_code": 302,
       "headers": {
        "Location": [
         "https://new.example.org/"
        ]
-      },
-      "status_code": 302
+      }
      }
     ],
     "terminal": true
@@ -9026,23 +9292,23 @@
      },
      {
       "handler": "static_response",
+      "status_code": 302,
       "headers": {
        "Location": [
         "https://new.example.org/"
        ]
-      },
-      "status_code": 302
+      }
      }
     ],
     "terminal": true
    }
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -9076,12 +9342,12 @@
      },
      {
       "handler": "static_response",
+      "status_code": 302,
       "headers": {
        "Location": [
         "https://new.example.org/"
        ]
-      },
-      "status_code": 302
+      }
      }
     ],
     "terminal": true
@@ -9118,27 +9384,27 @@
      },
      {
       "handler": "static_response",
+      "status_code": 302,
       "headers": {
        "Location": [
         "https://new.example.org/"
        ]
-      },
-      "status_code": 302
+      }
      }
     ],
     "terminal": true
    }
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "serveur HTTPS / vide": {
   "listen": [
@@ -9163,11 +9429,11 @@
    ":443"
   ],
   "trusted_proxies": {
+   "source": "static",
    "ranges": [
     "173.245.48.0/20",
     "192.0.2.7"
-   ],
-   "source": "static"
+   ]
   },
   "trusted_proxies_strict": 1
  },
@@ -9180,16 +9446,16 @@
   "listen": [
    ":443"
   ],
-  "trusted_proxies": {
-   "ranges": [
-    "192.0.2.7"
-   ],
-   "source": "static"
-  },
-  "trusted_proxies_strict": 1,
   "logs": {
    "default_logger_name": "gatewyn_access"
-  }
+  },
+  "trusted_proxies": {
+   "source": "static",
+   "ranges": [
+    "192.0.2.7"
+   ]
+  },
+  "trusted_proxies_strict": 1
  },
  "tls / auto-signe": {
   "policies": [
@@ -9217,6 +9483,7 @@
     ],
     "issuers": [
      {
+      "module": "acme",
       "challenges": {
        "dns": {
         "provider": {
@@ -9227,8 +9494,7 @@
          "name": "ovh"
         }
        }
-      },
-      "module": "acme"
+      }
      }
     ]
    }
@@ -9245,6 +9511,7 @@
     ],
     "issuers": [
      {
+      "module": "acme",
       "challenges": {
        "dns": {
         "provider": {
@@ -9255,8 +9522,7 @@
          "name": "ovh"
         }
        }
-      },
-      "module": "acme"
+      }
      }
     ]
    }
@@ -9268,6 +9534,7 @@
  "tls / proxy h2c": {},
  "tls / proxy hsts simple": {},
  "tls / proxy https": {},
+ "tls / proxy https sans verification": {},
  "tls / proxy options": {},
  "tls / proxy simple": {},
  "tls / proxy waf": {},

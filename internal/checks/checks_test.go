@@ -71,7 +71,7 @@ func TestDNS(t *testing.T) {
 func TestTargetOK(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("hi")) }))
 	defer srv.Close()
-	got := Target(context.Background(), srv.URL)
+	got := Target(context.Background(), srv.URL, false)
 	if got.Code != "target_ok" || got.Status != OK || !strings.Contains(got.Message, "200") {
 		t.Errorf("%+v", got)
 	}
@@ -83,7 +83,7 @@ func TestTargetRedirectAndClientErrorCountAsReachable(t *testing.T) {
 			w.Header().Set("Location", "http://elsewhere.example.com/")
 			w.WriteHeader(code)
 		}))
-		got := Target(context.Background(), srv.URL)
+		got := Target(context.Background(), srv.URL, false)
 		srv.Close()
 		if got.Status != OK {
 			t.Errorf("code %d : %+v", code, got)
@@ -94,7 +94,7 @@ func TestTargetRedirectAndClientErrorCountAsReachable(t *testing.T) {
 func TestTarget5xxIsWarning(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(503) }))
 	defer srv.Close()
-	got := Target(context.Background(), srv.URL)
+	got := Target(context.Background(), srv.URL, false)
 	if got.Status != Warn || got.Code != "target_5xx" {
 		t.Errorf("%+v", got)
 	}
@@ -104,7 +104,7 @@ func TestTargetClosedPort(t *testing.T) {
 	l, _ := net.Listen("tcp", "127.0.0.1:0")
 	addr := l.Addr().String()
 	l.Close() // port fermé
-	got := Target(context.Background(), "http://"+addr)
+	got := Target(context.Background(), "http://"+addr, false)
 	// Selon le système (WSL2 coupe au lieu de refuser), le message diffère ; les deux sont des erreurs claires.
 	if got.Status != Error || (got.Code != "target_refused" && got.Code != "target_reset") {
 		t.Errorf("%+v", got)
@@ -137,7 +137,7 @@ func TestTargetTimeout(t *testing.T) {
 	defer l.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
-	got := Target(ctx, "http://"+l.Addr().String())
+	got := Target(ctx, "http://"+l.Addr().String(), false)
 	if got.Code != "target_timeout" || !strings.Contains(got.Message, "ne répond pas") {
 		t.Errorf("%+v", got)
 	}
@@ -146,15 +146,18 @@ func TestTargetTimeout(t *testing.T) {
 func TestTargetSelfSignedCertificate(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer srv.Close()
-	got := Target(context.Background(), srv.URL)
+	got := Target(context.Background(), srv.URL, false)
 	if got.Code != "target_cert" || got.Status != Warn || !strings.Contains(got.Message, "http://") {
 		t.Errorf("%+v", got)
+	}
+	if got := Target(context.Background(), srv.URL, true); got.Code != "target_ok" || got.Status != OK {
+		t.Errorf("sans vérification du certificat : %+v", got)
 	}
 }
 
 func TestTargetInvalid(t *testing.T) {
 	for _, in := range []string{"192.0.2.1:80", "", "ftp://192.0.2.1"} {
-		got := Target(context.Background(), in)
+		got := Target(context.Background(), in, false)
 		if got.Code != "target_invalid" || got.Status != Error {
 			t.Errorf("%q : %+v", in, got)
 		}
@@ -204,13 +207,13 @@ func TestTargetH2COnlyTestsTheConnection(t *testing.T) {
 			c.Close() // ne parle pas HTTP du tout
 		}
 	}()
-	res := Target(context.Background(), "h2c://"+ln.Addr().String())
+	res := Target(context.Background(), "h2c://"+ln.Addr().String(), false)
 	if res.Status != OK || !strings.Contains(res.Message, "HTTP/2 n'est pas testé") {
 		t.Errorf("service qui écoute : %+v", res)
 	}
 	ln.Close()
 	// Port 1 : personne n'écoute (le port libéré par ln peut être repris par un autre test).
-	if res := Target(context.Background(), "h2c://127.0.0.1:1"); res.Status != Error {
+	if res := Target(context.Background(), "h2c://127.0.0.1:1", false); res.Status != Error {
 		t.Errorf("port fermé : %+v", res)
 	}
 }

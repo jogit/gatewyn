@@ -139,9 +139,9 @@ func (s *Server) dashboardOnline(w http.ResponseWriter, r *http.Request) {
 		}
 		d.Total++
 		wg.Add(1)
-		go func(domain, target string) {
+		go func(domain, target string, skip bool) {
 			defer wg.Done()
-			res := s.cfg.CheckTarget(ctx, target)
+			res := s.cfg.CheckTarget(ctx, target, skip)
 			mu.Lock()
 			defer mu.Unlock()
 			if res.Status != checks.Error {
@@ -149,7 +149,7 @@ func (s *Server) dashboardOnline(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			d.Watch = append(d.Watch, watchItem{Class: "err", Label: "Injoignable", Text: domain + " : " + res.Message, Href: "/hosts"})
-		}(h.Domain, h.Target)
+		}(h.Domain, h.Target, h.TLSSkipVerify)
 	}
 	wg.Add(1)
 	go func() { // CrowdSec

@@ -94,7 +94,7 @@ func DNS(ctx context.Context, r Resolver, domain string, publicIPs []string) Res
 // Target vérifie que le service répond. Une réponse HTTP, quel que soit son
 // code, prouve que le service est joignable ; seuls les échecs de connexion
 // sont des erreurs.
-func Target(ctx context.Context, target string) Result {
+func Target(ctx context.Context, target string, skipVerify bool) Result {
 	dial, useTLS, err := caddyconf.ParseTarget(target)
 	if err != nil {
 		return Result{Error, "target_invalid", capitalize(err.Error()) + "."}
@@ -114,7 +114,7 @@ func Target(ctx context.Context, target string) Result {
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	if useTLS {
-		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{}}
+		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify}}
 	}
 	scheme := "http"
 	if useTLS {
@@ -148,7 +148,7 @@ func explainTargetError(dial string, err error) Result {
 	case errors.As(err, &dnsErr):
 		return Result{Error, "target_dns", fmt.Sprintf("Le nom de la cible (%s) est introuvable. Vérifiez l'orthographe, ou utilisez son adresse IP.", hostOf(dial))}
 	case errors.As(err, &unknownAuth), errors.As(err, &certInvalid), errors.As(err, &hostErr):
-		return Result{Warn, "target_cert", fmt.Sprintf("La cible %s répond en HTTPS avec un certificat que Caddy ne reconnaît pas (courant sur un NAS ou un routeur). Choisissez http:// si le service l'accepte.", dial)}
+		return Result{Warn, "target_cert", fmt.Sprintf("La cible %s répond en HTTPS avec un certificat que Caddy ne reconnaît pas (courant sur un NAS ou un routeur). Cochez « Ne pas vérifier le certificat du service », ou choisissez http:// si le service l'accepte.", dial)}
 	case errors.Is(err, context.DeadlineExceeded), isTimeout(err):
 		return Result{Error, "target_timeout", fmt.Sprintf("La cible %s ne répond pas (délai dépassé). Vérifiez l'adresse, le port et le pare-feu.", dial)}
 	case strings.Contains(err.Error(), "server gave http response to https client"),

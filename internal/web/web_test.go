@@ -107,7 +107,7 @@ func newEnv(t *testing.T) *env {
 	e.srv, err = New(Config{
 		Store: st, Caddy: e.caddy, Secrets: box, AccessLogFile: "/data/logs/access.log", GoAccessURL: "http://127.0.0.1:1",
 		CheckDNS:    func(context.Context, string) checks.Result { return e.dns },
-		CheckTarget: func(context.Context, string) checks.Result { return e.target },
+		CheckTarget: func(context.Context, string, bool) checks.Result { return e.target },
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -1133,7 +1133,7 @@ func TestDashboardShowsOnlineHostsAndEvents(t *testing.T) {
 		t.Errorf("hôtes en ligne : %s", frag)
 	}
 
-	e.srv.cfg.CheckTarget = func(ctx context.Context, target string) checks.Result {
+	e.srv.cfg.CheckTarget = func(ctx context.Context, target string, _ bool) checks.Result {
 		if strings.Contains(target, "192.0.2.22") {
 			return checks.Result{Status: checks.Error}
 		}

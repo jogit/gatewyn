@@ -96,9 +96,13 @@ type upstream struct {
 }
 
 type transport struct {
-	Protocol string    `json:"protocol"`
-	TLS      *struct{} `json:"tls,omitempty"`      // la cible parle HTTPS
-	Versions []string  `json:"versions,omitempty"` // « h2c » : HTTP/2 sans chiffrement
+	Protocol string        `json:"protocol"`
+	TLS      *transportTLS `json:"tls,omitempty"`      // la cible parle HTTPS
+	Versions []string      `json:"versions,omitempty"` // « h2c » : HTTP/2 sans chiffrement
+}
+
+type transportTLS struct {
+	InsecureSkipVerify bool `json:"insecure_skip_verify,omitempty"` // le certificat de la cible n'est pas vérifié
 }
 
 // Certificats (apps.tls.automation).

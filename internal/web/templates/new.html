@@ -33,6 +33,7 @@
 {{if eq .Kind "proxy"}}<section class="grp"><h3>Performances</h3>
 <div class="switch"><label for="compress"><b>Compression</b></label><input type="checkbox" id="compress" name="compress" value="1"{{if .Compress}} checked{{end}}><label for="compress" class="tog" aria-hidden="true"></label></div>
 <div class="switch"><label for="no_buffering"><b>Désactiver le buffering (streaming)</b><small>Pour les flux en direct, SSE, vidéo</small></label><input type="checkbox" id="no_buffering" name="no_buffering" value="1"{{if .NoBuffering}} checked{{end}}><label for="no_buffering" class="tog" aria-hidden="true"></label></div>
+<div class="switch"><label for="tls_skip_verify"><b>Ne pas vérifier le certificat du service</b><small>Pour un service en https:// à certificat auto-signé ou expiré (NAS, routeur). À réserver à un réseau de confiance.</small></label><input type="checkbox" id="tls_skip_verify" name="tls_skip_verify" value="1"{{if .TLSSkipVerify}} checked{{end}}><label for="tls_skip_verify" class="tog" aria-hidden="true"></label></div>
 </section>{{end}}
 
 </div>

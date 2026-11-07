@@ -13,15 +13,16 @@ func goldenScenarios(t *testing.T) map[string]json.RawMessage {
 	t.Helper()
 	ovh := &DNSChallenge{Account: 1, Provider: map[string]any{"name": "ovh", "endpoint": "ovh-eu", "application_key": "ak-fictif", "application_secret": "as-fictif", "consumer_key": "ck-fictif"}}
 	hostSets := map[string][]Host{
-		"proxy simple":      {{Domain: "wiki.example.com", Target: "http://192.0.2.21:8080"}},
-		"proxy https":       {{Domain: "nas.example.com", Target: "https://192.0.2.30"}},
-		"proxy h2c":         {{Domain: "grpc.example.com", Target: "h2c://192.0.2.31:50051"}},
-		"proxy options":     {{Domain: "app.example.com", Target: "http://192.0.2.22:3000", Compress: true, NoBuffering: true, FrameOptions: "SAMEORIGIN", NoIndex: true, HSTS: 2}},
-		"proxy hsts simple": {{Domain: "app.example.com", Target: "http://192.0.2.22:3000", HSTS: 1, FrameOptions: "DENY"}},
-		"proxy alias":       {{Domain: "wiki.example.com", Aliases: []string{"docs.example.com", "*.wiki.example.com"}, Target: "http://192.0.2.21:8080"}},
-		"proxy acces":       {{Domain: "admin.example.com", Target: "http://192.0.2.23:80", Access: []string{"192.0.2.0/24", "198.51.100.7"}}},
-		"proxy crowdsec":    {{Domain: "wiki.example.com", Target: "http://192.0.2.21:8080", CrowdSec: true, Compress: true}},
-		"proxy waf":         {{Domain: "wiki.example.com", Target: "http://192.0.2.21:8080", CrowdSec: true, WAF: true, NoIndex: true}},
+		"proxy simple":                  {{Domain: "wiki.example.com", Target: "http://192.0.2.21:8080"}},
+		"proxy https":                   {{Domain: "nas.example.com", Target: "https://192.0.2.30"}},
+		"proxy https sans verification": {{Domain: "nas.example.com", Target: "https://192.0.2.30", TLSSkipVerify: true}},
+		"proxy h2c":                     {{Domain: "grpc.example.com", Target: "h2c://192.0.2.31:50051"}},
+		"proxy options":                 {{Domain: "app.example.com", Target: "http://192.0.2.22:3000", Compress: true, NoBuffering: true, FrameOptions: "SAMEORIGIN", NoIndex: true, HSTS: 2}},
+		"proxy hsts simple":             {{Domain: "app.example.com", Target: "http://192.0.2.22:3000", HSTS: 1, FrameOptions: "DENY"}},
+		"proxy alias":                   {{Domain: "wiki.example.com", Aliases: []string{"docs.example.com", "*.wiki.example.com"}, Target: "http://192.0.2.21:8080"}},
+		"proxy acces":                   {{Domain: "admin.example.com", Target: "http://192.0.2.23:80", Access: []string{"192.0.2.0/24", "198.51.100.7"}}},
+		"proxy crowdsec":                {{Domain: "wiki.example.com", Target: "http://192.0.2.21:8080", CrowdSec: true, Compress: true}},
+		"proxy waf":                     {{Domain: "wiki.example.com", Target: "http://192.0.2.21:8080", CrowdSec: true, WAF: true, NoIndex: true}},
 		"chemins": {{Domain: "wiki.example.com", Target: "http://192.0.2.21:8080", Access: []string{"192.0.2.0/24"}, Locations: []Location{
 			{Path: "/api", Target: "https://192.0.2.6:8443", StripPath: true},
 			{Path: "/api/v2", Target: "http://192.0.2.7:9000"},

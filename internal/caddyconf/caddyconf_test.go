@@ -643,6 +643,24 @@ func TestH2CTargetUsesHTTP2WithoutTLS(t *testing.T) {
 	}
 }
 
+func TestTLSSkipVerifyOnlyAffectsHTTPSTargets(t *testing.T) {
+	srv, err := BuildServer([]Host{
+		{Domain: "nas.example.com", Target: "https://192.0.2.10:5001", TLSSkipVerify: true, Locations: []Location{{Path: "/api", Target: "https://192.0.2.11:443"}}},
+		{Domain: "strict.example.com", Target: "https://192.0.2.12:443"},
+		{Domain: "plain.example.com", Target: "http://192.0.2.13:80", TLSSkipVerify: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := json.Marshal(srv.Routes)
+	if n := strings.Count(string(raw), `"insecure_skip_verify":true`); n != 2 { // l'hôte et son chemin
+		t.Errorf("%d transports sans vérification, attendu 2 : %s", n, raw)
+	}
+	if !strings.Contains(string(raw), `"tls":{}`) {
+		t.Errorf("l'hôte strict garde la vérification : %s", raw)
+	}
+}
+
 func TestLocationStripPathAddsARewriteBeforeTheProxy(t *testing.T) {
 	srv, _ := BuildServer([]Host{{Domain: "a.example.com", Target: "http://192.0.2.1:80", Locations: []Location{
 		{Path: "/api", Target: "http://192.0.2.5:3000", StripPath: true},
