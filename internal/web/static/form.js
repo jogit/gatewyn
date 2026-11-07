@@ -20,30 +20,60 @@ document.addEventListener("click", function (e) {
   });
 });
 
-// Menus de la barre supérieure : un seul ouvert, fermeture hors menu et avec Échap.
-document.addEventListener("toggle", function (e) {
-  var menu = e.target;
-  if (!menu.matches || !menu.matches(".navdrop") || !menu.open) return;
-  document.querySelectorAll(".navdrop[open]").forEach(function (other) {
-    if (other !== menu) other.open = false;
-  });
-}, true);
-
-document.addEventListener("click", function (e) {
-  var link = e.target.closest(".navdrop .drop a");
-  if (link) {
-    link.closest(".navdrop").open = false;
-    return;
+// « À surveiller » : les hôtes dont la vérification a échoué ou dont le certificat pose problème.
+(function () {
+  var btn = document.getElementById("watch-filter");
+  if (!btn) return;
+  function rows() { return document.querySelectorAll("#hosts-list a.hrow"); }
+  function refresh() {
+    var n = 0;
+    rows().forEach(function (r) {
+      var bad = r.hasAttribute("data-problem") || r.querySelector(".state .dot.err, .state .dot.warn[data-state]");
+      r.toggleAttribute("data-watch", !!bad);
+      if (bad) n++;
+    });
+    var count = document.getElementById("watch-count");
+    count.textContent = n;
+    count.classList.toggle("some", n > 0);
+    if (btn.getAttribute("aria-pressed") === "true") rows().forEach(function (r) { r.hidden = !r.hasAttribute("data-watch"); });
   }
-  if (e.target.closest(".navdrop")) return;
-  document.querySelectorAll(".navdrop[open]").forEach(function (menu) {
-    menu.open = false;
+  btn.addEventListener("click", function () {
+    var on = btn.getAttribute("aria-pressed") !== "true";
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    rows().forEach(function (r) { r.hidden = on && !r.hasAttribute("data-watch"); });
+  });
+  document.body.addEventListener("htmx:afterSwap", refresh);
+  document.body.addEventListener("htmx:oobAfterSwap", refresh);
+  refresh();
+})();
+
+// Trafic : filtre des dernières requêtes (toutes, ou seulement les erreurs).
+document.querySelectorAll("[data-rfilter]").forEach(function (c) {
+  c.addEventListener("click", function () {
+    document.querySelectorAll("[data-rfilter]").forEach(function (x) { x.classList.toggle("on", x === c); });
+    document.querySelectorAll("tr[data-class]").forEach(function (r) {
+      r.hidden = c.dataset.rfilter === "err" && r.dataset.class !== "err" && r.dataset.class !== "warn";
+    });
   });
 });
 
-document.addEventListener("keydown", function (e) {
-  if (e.key !== "Escape") return;
-  document.querySelectorAll(".navdrop[open]").forEach(function (menu) {
-    menu.open = false;
+// Recherche dans une liste déjà affichée (adresses bloquées).
+document.querySelectorAll("[data-filter-rows]").forEach(function (input) {
+  input.addEventListener("input", function () {
+    var q = input.value.toLowerCase().trim();
+    document.querySelectorAll(input.dataset.filterRows).forEach(function (r) {
+      r.hidden = !r.textContent.toLowerCase().includes(q);
+    });
   });
 });
+
+// Réglages : le thème est un choix de ce navigateur, enregistré ici seulement.
+(function () {
+  var select = document.getElementById("theme-select");
+  if (!select) return;
+  try { select.value = localStorage.getItem("gw-theme") || ""; } catch (e) {}
+  select.addEventListener("change", function () {
+    try { if (select.value) localStorage.setItem("gw-theme", select.value); else localStorage.removeItem("gw-theme"); } catch (e) {}
+    if (select.value) document.documentElement.dataset.theme = select.value; else delete document.documentElement.dataset.theme;
+  });
+})();

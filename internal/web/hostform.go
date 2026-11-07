@@ -352,6 +352,9 @@ func (s *Server) formPage(r *http.Request, old *store.Host, kind string) page {
 		if old.Kind == caddyconf.KindRedirect {
 			p.Code, p.Preserve = old.Code, old.PreservePath
 		}
+		p.CertProblem = s.certProblem(*old)
+		p.Strip = s.hostStrip(r.Context(), *old)
+		p.HostRecent = s.hostRecent(r.Context(), old.Domain, 5)
 	}
 	return p
 }

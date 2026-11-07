@@ -75,25 +75,28 @@ type dashOnline struct {
 	Watch                 []watchItem
 }
 
-func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	entries, err := s.cfg.Store.RecentAudit(ctx, 50)
-	if err != nil {
-		s.fail(w, r, err)
-		return
-	}
-	hosts, err := s.cfg.Store.ListHosts(ctx)
-	if err != nil {
-		s.fail(w, r, err)
-		return
-	}
-	p := s.authedPage(r, "Vue d'ensemble", "dashboard")
-	p.Events = events(entries, s.cfg.Now())
-	if len(p.Events) > 8 {
-		p.Events = p.Events[:8]
-	}
-	p.HasHosts = len(hosts) > 0
+// maxAlerts : nombre d'alertes montrées d'emblée ; les autres se déplient.
+const maxAlerts = 4
 
+func (d dashOnline) First() []watchItem {
+	return d.Watch[:min(len(d.Watch), maxAlerts)]
+}
+
+func (d dashOnline) Rest() []watchItem {
+	if len(d.Watch) <= maxAlerts {
+		return nil
+	}
+	return d.Watch[maxAlerts:]
+}
+
+// MoreLabel : le texte du bouton qui déplie les alertes en plus.
+func (d dashOnline) MoreLabel() string {
+	return plural(len(d.Watch)-maxAlerts, "%d autre alerte", "%d autres alertes")
+}
+
+// fillStrip remplit la bande d'état de la liste des hôtes : certificats, trafic, protection.
+// Les cases qui demandent un appel réseau (services en ligne, CrowdSec) sont chargées après coup.
+func (s *Server) fillStrip(ctx context.Context, p *page) {
 	// Certificats : nombre et prochaine échéance, lus sur le disque.
 	if p.CertsReadable = s.cfg.CertDir != ""; p.CertsReadable {
 		list, _ := certs.List(s.cfg.CertDir)
@@ -110,14 +113,13 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Trafic : résumé du journal d'accès, s'il est activé.
-	s.fillAccessLog(ctx, &p)
+	s.fillAccessLog(ctx, p)
 	if p.AccessLogOn {
 		_, p.StatsSum = readRequests(s.cfg.AccessLogFile, 0, 5000)
 	}
 	if c, err := s.loadCrowdSec(ctx); err == nil {
 		p.CSConfigured = c.URL != ""
 	}
-	s.render(w, "dashboard", p)
 }
 
 // dashboardOnline vérifie la cible de chaque service actif et résume le résultat. Dans la même requête
@@ -180,7 +182,7 @@ func (s *Server) dashboardOnline(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	d.Watch = append(d.Watch, s.expiringCerts()...)
-	s.renderFragment(w, "dashboard", "online", d)
+	s.renderFragment(w, "hosts", "online", d)
 }
 
 // expiringCerts signale les certificats qui expirent sous 14 jours, ou qui ont expiré.

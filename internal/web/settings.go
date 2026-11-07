@@ -75,6 +75,12 @@ func (s *Server) settingsData(r *http.Request) page {
 	p.GoAccessReport, p.GoAccessTarget = s.goAccessReportURL(r.Context(), pageHost(r)), s.cfg.GoAccessURL
 	p.UILanguage = s.languageSetting(r.Context())
 	s.fillAccessLog(r.Context(), &p)
+	if entries, err := s.cfg.Store.RecentAudit(r.Context(), 50); err == nil {
+		p.Events = events(entries, s.cfg.Now())
+		if len(p.Events) > 8 {
+			p.Events = p.Events[:8]
+		}
+	}
 	return p
 }
 

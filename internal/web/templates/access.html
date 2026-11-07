@@ -1,6 +1,0 @@
-{{define "content"}}<header class="top publish-head"><h1>Accès réseau</h1></header>
-<div id="flash" aria-live="polite">{{if .Flash}}<div class="note"><span class="pill ok">OK</span> {{.Flash}}</div>{{end}}</div>
-<div class="grid access-grid">
-<section class="card"><div class="cardhead"><div><h2>Listes d'accès</h2><p class="muted">Réservent un service à certains réseaux : bureau, VPN, réseau local.</p></div><a class="btn sm primary" href="/security/lists/new">Nouvelle liste</a></div>{{if .Lists}}<div class="list">{{range .Lists}}<div class="row"><div class="grow"><b>{{.Name}}</b><br><small class="muted mono">{{.Addresses}}</small></div><span class="pill">{{.Hosts}} hôte{{if gt .Hosts 1}}s{{end}}</span><a class="btn sm" href="/security/lists/{{.ID}}/edit">Modifier</a></div>{{end}}</div>{{else}}<div class="mini-empty"><span>◎</span><p>Aucune liste pour l'instant.</p></div>{{end}}</section>
-
-</div>{{end}}

@@ -25,6 +25,7 @@ import (
 	"github.com/jogit/gatewyn/internal/auth"
 	"github.com/jogit/gatewyn/internal/caddyadmin"
 	"github.com/jogit/gatewyn/internal/caddyconf"
+	"github.com/jogit/gatewyn/internal/certs"
 	"github.com/jogit/gatewyn/internal/checks"
 	"github.com/jogit/gatewyn/internal/dnsprov"
 	"github.com/jogit/gatewyn/internal/secrets"
@@ -116,7 +117,7 @@ func New(cfg Config) (*Server, error) {
 	}
 	s := &Server{cfg: cfg, pages: map[string]*template.Template{}, limiter: auth.NewLimiter(5, 15*time.Minute)}
 	s.limiter.Now = cfg.Now
-	for _, name := range []string{"login", "setup", "hosts", "new", "dashboard", "security", "access", "proxies", "listform", "certificates", "dnsform", "dnsaccounts", "stats", "statsinstall", "crowdsecform", "crowdsecinstall", "settings"} {
+	for _, name := range []string{"login", "setup", "hosts", "new", "security", "decisions", "listform", "certificates", "dnsform", "stats", "statsinstall", "crowdsecform", "crowdsecinstall", "settings"} {
 		t, err := template.ParseFS(assets, "templates/layout.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, err
@@ -139,7 +140,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /login", s.loginSubmit)
 	mux.HandleFunc("POST /logout", s.logout)
 
-	mux.HandleFunc("GET /{$}", s.auth(s.dashboard))
+	mux.HandleFunc("GET /{$}", s.auth(s.listPage("")))
 	mux.HandleFunc("GET /dashboard/online", s.auth(s.dashboardOnline))
 	mux.HandleFunc("GET /hosts", s.auth(s.listPage(caddyconf.KindProxy)))
 	mux.HandleFunc("GET /stats", s.auth(s.statsGet))
@@ -159,6 +160,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /certificates/dns/{id}/delete", s.auth(s.deleteDNS))
 	mux.HandleFunc("GET /security", s.auth(s.securityPage))
 	mux.HandleFunc("GET /security/protection", s.auth(s.crowdSecPage))
+	mux.HandleFunc("GET /security/decisions", s.auth(s.decisionsPage))
 	mux.HandleFunc("GET /security/access", s.auth(s.accessPage))
 	mux.HandleFunc("GET /security/proxies", s.auth(s.proxiesPage))
 	mux.HandleFunc("POST /security/proxies", s.auth(s.saveProxies))
@@ -408,12 +410,21 @@ type hostView struct {
 	CertProblem string // échec d'obtention du certificat, en clair (vide : aucun)
 	IsProxy     bool
 	Tags        []tagView // options qui comptent pour l'accès ou la sécurité (service seulement)
+	Access      string    // nom de la liste d'accès (vide : public)
+	CertText    string    // colonne HTTPS : « 64 j », « Auto-signé »…
+	CertClass   string
 }
 
 // tagView : une pastille d'option sous l'adresse d'un hôte.
 type tagView struct{ Class, Label string }
 
 type resultView struct{ Class, Label, Message string }
+
+// statusView : le résultat de la vérification d'un hôte dans la liste (point de couleur et message).
+type statusView struct {
+	ID                    int64
+	Class, Label, Message string
+}
 
 func view(r checks.Result) resultView {
 	v := resultView{Message: r.Message}
@@ -437,26 +448,37 @@ func listPath(kind string) string {
 		return "/redirections"
 	case caddyconf.KindNotFound:
 		return "/erreurs-404"
+	case "":
+		return "/"
 	}
 	return "/hosts"
 }
 
-var listTitles = map[string]string{caddyconf.KindProxy: "Hôtes", caddyconf.KindRedirect: "Redirections", caddyconf.KindNotFound: "Erreurs 404"}
+var listTitles = map[string]string{"": "Hôtes", caddyconf.KindProxy: "Hôtes", caddyconf.KindRedirect: "Redirections", caddyconf.KindNotFound: "Erreurs 404"}
 
 func (s *Server) listPage(kind string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) { s.hostsList(w, r, kind) }
 }
 
 func (s *Server) hostsList(w http.ResponseWriter, r *http.Request, kind string) {
-	hosts, err := s.cfg.Store.ListHosts(r.Context())
+	ctx := r.Context()
+	hosts, err := s.cfg.Store.ListHosts(ctx)
 	if err != nil {
 		s.fail(w, r, err)
 		return
 	}
-	p := s.authedPage(r, listTitles[kind], kind)
+	nav := kind
+	if nav == "" {
+		nav = "hosts"
+	}
+	p := s.authedPage(r, listTitles[kind], nav)
 	p.Kind, p.ListPath = kind, listPath(kind)
 	p.Query = strings.TrimSpace(r.URL.Query().Get("q"))
-	lists, err := s.cfg.Store.AccessLists(r.Context())
+	p.HasHosts = len(hosts) > 0
+	if len(s.cfg.PublicIPs) > 0 {
+		p.PublicIP = s.cfg.PublicIPs[0]
+	}
+	lists, err := s.cfg.Store.AccessLists(ctx)
 	if err != nil {
 		s.fail(w, r, err)
 		return
@@ -465,10 +487,26 @@ func (s *Server) hostsList(w http.ResponseWriter, r *http.Request, kind string) 
 	for _, l := range lists {
 		listNames[l.ID] = l.Name
 	}
+	certByName := s.certsByName()
+	now := s.cfg.Now()
 	for _, h := range hosts {
-		if kindFromForm(h.Kind) == kind && matches(h, p.Query) {
+		k := kindFromForm(h.Kind)
+		p.CountAll++
+		switch k {
+		case caddyconf.KindRedirect:
+			p.CountRedirect++
+		case caddyconf.KindNotFound:
+			p.CountNotFound++
+		default:
+			p.CountProxy++
+		}
+		if (kind == "" || k == kind) && matches(h, p.Query) {
 			v := toView(h, listNames)
 			v.CertProblem = s.certProblem(h)
+			v.CertText, v.CertClass = certColumn(h, certByName, now)
+			if h.AccessListID != 0 {
+				v.Access = listNames[h.AccessListID]
+			}
 			p.Hosts = append(p.Hosts, v)
 		}
 	}
@@ -476,6 +514,7 @@ func (s *Server) hostsList(w http.ResponseWriter, r *http.Request, kind string) 
 		s.renderFragment(w, "hosts", "list", p)
 		return
 	}
+	s.fillStrip(ctx, &p)
 	q := r.URL.Query()
 	switch {
 	case q.Get("added") != "":
@@ -492,6 +531,42 @@ func (s *Server) hostsList(w http.ResponseWriter, r *http.Request, kind string) 
 	s.render(w, "hosts", p)
 }
 
+// certsByName indexe les certificats lus sur le disque par nom couvert.
+func (s *Server) certsByName() map[string]certs.Cert {
+	if s.cfg.CertDir == "" {
+		return nil
+	}
+	list, _ := certs.List(s.cfg.CertDir)
+	m := map[string]certs.Cert{}
+	for _, c := range list {
+		m[c.Domain] = c
+		for _, n := range c.Names {
+			if _, ok := m[n]; !ok {
+				m[n] = c
+			}
+		}
+	}
+	return m
+}
+
+// certColumn : ce que la colonne HTTPS de la liste affiche pour un hôte.
+func certColumn(h store.Host, byName map[string]certs.Cert, now time.Time) (text, class string) {
+	switch {
+	case h.Disabled:
+		return "—", ""
+	case h.HTTPOnly, h.SelfSigned: // dit par la pastille sous le domaine
+		return "—", ""
+	}
+	if c, ok := byName[h.Domain]; ok {
+		cl := expiryClass(now, c.Expires)
+		if cl == "ok" {
+			cl = ""
+		}
+		return daysLeft(now, c.Expires), cl
+	}
+	return "—", ""
+}
+
 // audit enregistre l'action dans le journal d'audit. Ne jamais y mettre de secret.
 func (s *Server) audit(ctx context.Context, action, detail string) {
 	if err := s.cfg.Store.Audit(ctx, action, detail); err != nil {
@@ -505,7 +580,13 @@ func (s *Server) hostStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Kind == caddyconf.KindRedirect || h.Kind == caddyconf.KindNotFound {
-		s.renderFragment(w, "hosts", "status", struct{ Class, Label, Message string }{"ok", "Actif", ""})
+		sv := statusView{Class: "ok", Label: "Actif"}
+		switch {
+		case r.URL.Query().Get("pill") != "":
+			s.renderFragment(w, "hosts", "statuspill", sv)
+		default:
+			s.renderFragment(w, "hosts", "status", sv)
+		}
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 6*time.Second)
@@ -519,7 +600,15 @@ func (s *Server) hostStatus(w http.ResponseWriter, r *http.Request) {
 	case checks.Error:
 		label = "Cible injoignable"
 	}
-	s.renderFragment(w, "hosts", "status", struct{ Class, Label, Message string }{v.Class, label, res.Message})
+	sv := statusView{ID: h.ID, Class: v.Class, Label: label, Message: res.Message}
+	switch {
+	case r.URL.Query().Get("pill") != "":
+		s.renderFragment(w, "hosts", "statuspill", sv)
+	case r.URL.Query().Get("cell") != "":
+		s.renderFragment(w, "hosts", "statuscell", sv)
+	default:
+		s.renderFragment(w, "hosts", "status", sv)
+	}
 }
 
 func (s *Server) toggleHost(w http.ResponseWriter, r *http.Request) {
@@ -728,7 +817,12 @@ type page struct {
 	AccessLogOn      bool
 	AccessLogDays    int
 	AccessLogChoices []int
-	HasHosts         bool   // vue d'ensemble : au moins un hôte
+	HasHosts         bool // au moins un hôte existe
+	CountAll         int  // liste des hôtes : nombre par type (sans la recherche)
+	CountProxy       int
+	CountRedirect    int
+	CountNotFound    int
+	PublicIP         string // première adresse publique connue : celle que le DNS doit désigner
 	CertCount        int    // vue d'ensemble : certificats lus
 	CertNext         string // vue d'ensemble : délai avant la prochaine échéance
 	CertClass        string
@@ -749,6 +843,11 @@ type page struct {
 	FrameOptions     string
 	RootCert         bool // le certificat racine de Caddy existe et peut être téléchargé
 	Name, Addresses  string
+	HostRecent       []reqView      // page d'un hôte : ses dernières requêtes
+	Strip            hostStrip      // page d'un hôte : bande d'état
+	CertProblem      string         // page d'un hôte : pourquoi le certificat n'est pas obtenu
+	Decisions        []decisionView // adresses bloquées par CrowdSec
+	DecisionsTotal   int
 	AccessID         int64 // formulaire d'hôte : liste d'accès choisie (0 = public)
 }
 

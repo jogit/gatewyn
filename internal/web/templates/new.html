@@ -1,52 +1,62 @@
-{{define "content"}}<header class="top publish-head"><div><a class="back-link" href="{{.ListPath}}">← Retour aux hôtes</a><h1>{{.Heading}}</h1></div>{{if .Editing}}<div class="danger-zone"><button type="button" class="btn" hx-post="/hosts/{{.EditID}}/toggle" hx-target="#flash" hx-swap="innerHTML">{{if .EditDisabled}}Activer{{else}}Désactiver{{end}}</button><button type="button" class="btn danger" hx-post="/hosts/{{.EditID}}/delete" hx-confirm="Supprimer {{.Domain}} ? Il ne sera plus publié." hx-target="#flash" hx-swap="innerHTML">Supprimer</button></div>{{end}}</header>
+{{define "content"}}<header class="top publish-head"><div><a class="back-link" href="{{.ListPath}}">← Retour aux hôtes</a><div class="title-row"><h1>{{.Heading}}</h1>{{if and .Editing .EditDisabled}}<span class="state-tag"><span class="pill"><span class="dot"></span>Désactivé</span></span>{{else if .Editing}}<span class="state-tag" hx-get="/hosts/{{.EditID}}/status?pill=1" hx-trigger="load" hx-swap="innerHTML"></span>{{end}}</div></div>{{if .Editing}}<div class="danger-zone">{{if eq .Kind "proxy"}}<a class="btn" href="https://{{.Strip.Domain}}" target="_blank" rel="noopener">Ouvrir ↗</a>{{end}}<button type="button" class="btn" hx-post="/hosts/{{.EditID}}/toggle" hx-target="#flash" hx-swap="innerHTML">{{if .EditDisabled}}Activer{{else}}Désactiver{{end}}</button><button type="button" class="btn danger" hx-post="/hosts/{{.EditID}}/delete" hx-confirm="Supprimer {{.Domain}} ? Il ne sera plus publié." hx-target="#flash" hx-swap="innerHTML">Supprimer</button></div>{{end}}</header>
 <div id="flash" aria-live="polite"></div>
+{{if and .Editing .CertProblem}}<div class="note err-note" role="alert"><span class="pill err">Certificat non obtenu</span> {{.CertProblem}}</div>{{end}}
+<div id="host-note" aria-live="polite">{{if and .Editing .EditDisabled}}<div class="note warn-note">Cet hôte est désactivé : le domaine ne répond plus et rien n'est renouvelé. Activez-le pour le publier de nouveau.</div>{{end}}</div>
+{{if .Editing}}<div class="status-grid strip-host">
+<article class="status-cell"><span>Réponse du service</span>{{if and (eq .Kind "proxy") .EditDisabled}}<strong>Désactivé</strong><p>le domaine ne répond plus</p>{{else if eq .Kind "proxy"}}<div id="cell-response" hx-get="/hosts/{{.EditID}}/status?cell=1" hx-trigger="load" hx-swap="innerHTML"><strong>…</strong><p>Vérification en cours…</p></div>{{else if eq .Kind "redirect"}}<strong>Redirige</strong><p>vers {{.Target}}</p>{{else}}<strong>Page 404</strong><p>répond « 404 Not Found »</p>{{end}}</article>
+<article class="status-cell {{.Strip.CertClass}}"><span>Certificat</span><strong>{{.Strip.CertTitle}}</strong><p>{{.Strip.CertSub}}</p></article>
+<article class="status-cell"><span>Trafic</span><strong>{{.Strip.TrafficTitle}}</strong><p>{{.Strip.TrafficSub}}</p></article>
+<article class="status-cell"><span>Protection</span><strong>{{.Strip.ProtTitle}}</strong><p>{{.Strip.ProtSub}}</p></article>
+</div>{{end}}
 
-<form method="post" action="{{.Action}}" class="grid g2 start publish-shell">
+<form method="post" action="{{.Action}}" class="formgrid publish-shell">
 <input type="hidden" name="kind" value="{{.Kind}}">
+<nav class="secnav" aria-label="Sections du formulaire"><a href="#essentiel" class="on">Essentiel</a><a href="#https">HTTPS</a>{{if eq .Kind "proxy"}}<a href="#acces">Accès et protection</a><a href="#chemins">Chemins</a><a href="#avance">Avancé</a>{{else}}<a href="#acces">Protection</a><a href="#avance">Avancé</a>{{end}}</nav>
 <div class="card publish-main"><div class="form">
 {{if .Error}}<div class="note" role="alert"><span class="pill err">Erreur</span> {{.Error}}</div>{{end}}
-<div class="f"><b>Domaine</b><div id="dom-rows">{{range .DomainList}}{{template "domrow" .}}{{end}}</div><div><button type="button" class="linkbtn" hx-get="/hosts/domains/row" hx-target="#dom-rows" hx-swap="beforeend">+ Ajouter un nom</button></div></div>
-{{if eq .Kind "redirect"}}<label class="f">Destination<input class="t mono" name="target" value="{{.Target}}" placeholder="https://nouveau-site.example.org" autocomplete="off" autocapitalize="none" spellcheck="false" required></label>
-<div class="opts"><section class="grp"><h3>Redirection</h3>
+<div class="opts">
+<section class="grp" id="essentiel"><h3>Essentiel</h3>
+{{if not .Editing}}<div class="f"><span class="l">Type</span><nav class="seg" aria-label="Type d'hôte"><a href="/hosts/new"{{if eq .Kind "proxy"}} class="on" aria-current="true"{{end}}><b>Service</b><small>Publier une application en HTTPS</small></a><a href="/hosts/new?kind=redirect"{{if eq .Kind "redirect"}} class="on" aria-current="true"{{end}}><b>Redirection</b><small>Envoyer vers une autre adresse</small></a><a href="/hosts/new?kind=404"{{if eq .Kind "404"}} class="on" aria-current="true"{{end}}><b>Page 404</b><small>Domaine sans contenu</small></a></nav></div>{{end}}
+<div class="f"><b>Domaine</b><div id="dom-rows">{{range .DomainList}}{{template "domrow" .}}{{end}}</div>
+<div class="slot check" hx-post="/hosts/check/dns" hx-trigger="{{if .Editing}}load, {{end}}input from:closest form delay:600ms" hx-include="closest form" hx-swap="innerHTML">{{if .Checks}}{{template "checks" .Checks}}{{else}}<small class="muted">Le DNS sera vérifié pendant la saisie.</small>{{end}}<small class="muted wait">Vérification du DNS…</small></div>
+<div><button type="button" class="linkbtn" hx-get="/hosts/domains/row" hx-target="#dom-rows" hx-swap="beforeend">+ Ajouter un nom</button></div></div>
+{{if eq .Kind "redirect"}}<label class="f">Destination<input class="t big mono" name="target" value="{{.Target}}" placeholder="https://nouveau-site.example.org" autocomplete="off" autocapitalize="none" spellcheck="false" required></label>
+<div class="slot check" hx-post="/hosts/check/target" hx-trigger="{{if .Editing}}load, {{end}}input from:closest form delay:600ms" hx-include="closest form" hx-swap="innerHTML"><small class="muted wait">Destination</small></div>
 <div class="switch"><label for="preserve"><b>Garder le chemin</b><small>/page reste /page sur la destination</small></label><input type="checkbox" id="preserve" name="preserve" value="1"{{if .Preserve}} checked{{end}}><label for="preserve" class="tog" aria-hidden="true"></label></div>
 <label class="f">Type de redirection<select class="t" name="code"><option value="301"{{if ne .Code 302}} selected{{end}}>Permanente (301)</option><option value="302"{{if eq .Code 302}} selected{{end}}>Temporaire (302)</option></select></label>
-</section></div>
 {{else if eq .Kind "404"}}
-{{else}}<label class="f">Cible<input class="t mono" name="target" value="{{.Target}}" placeholder="http://192.0.2.21:8080" title="HTTP, HTTPS ou h2c://hôte:port" autocomplete="off" autocapitalize="none" spellcheck="false" required></label>
-{{if .Lists}}<label class="f">Accès<select class="t" name="access"><option value="0">Public : tout le monde</option>{{range .Lists}}<option value="{{.ID}}"{{if eq $.AccessID .ID}} selected{{end}}>Limité à « {{.Name}} »</option>{{end}}</select></label>{{end}}{{end}}
+{{else}}<label class="f">Cible<input class="t big mono" name="target" value="{{.Target}}" placeholder="http://192.0.2.21:8080" title="HTTP, HTTPS ou h2c://hôte:port" autocomplete="off" autocapitalize="none" spellcheck="false" required><small>Adresse du service sur le réseau local : http://, https:// ou h2c://.</small></label>
+<div class="slot check" hx-post="/hosts/check/target" hx-trigger="{{if .Editing}}load, {{end}}input from:closest form delay:600ms" hx-include="closest form" hx-swap="innerHTML"><small class="muted wait">Cible</small></div>{{end}}
+</section>
 
-<div class="opts">
-<section class="grp"><h3>HTTPS</h3>
+<section class="grp" id="https"><h3>HTTPS</h3>
 <label class="f">Certificat<select class="t" name="dns"><option value="0">Automatique (défi HTTP)</option>{{range .DNS}}<option value="{{.ID}}"{{if eq $.DNSID .ID}} selected{{end}}>Défi DNS : {{.Name}} ({{.Provider}})</option>{{end}}<option value="internal"{{if .SelfSigned}} selected{{end}}>Auto-signé (Caddy)</option><option value="http"{{if .HTTPOnly}} selected{{end}}>Aucun : HTTP seulement</option></select></label>
-<div class="switch"><label for="hsts"><b>HSTS</b></label><input type="checkbox" id="hsts" name="hsts" value="1"{{if .HSTS}} checked{{end}}><label for="hsts" class="tog" aria-hidden="true"></label></div>
+<div class="switch"><label for="hsts"><b>HSTS</b><small>Les navigateurs n'utiliseront plus que HTTPS pour ce domaine.</small></label><input type="checkbox" id="hsts" name="hsts" value="1"{{if .HSTS}} checked{{end}}><label for="hsts" class="tog" aria-hidden="true"></label></div>
 <div class="switch sub"><label for="hsts_sub"><b>Inclure les sous-domaines</b></label><input type="checkbox" id="hsts_sub" name="hsts_sub" value="1"{{if eq .HSTS 2}} checked{{end}}><label for="hsts_sub" class="tog" aria-hidden="true"></label></div>
 </section>
-<section class="grp"><h3>Protection</h3>
-{{if eq .Kind "proxy"}}{{if or .WAFAvailable .WAF}}<div class="switch"><label for="waf"><b>WAF (CrowdSec AppSec)</b></label><input type="checkbox" id="waf" name="waf" value="1"{{if .WAF}} checked{{end}}><label for="waf" class="tog" aria-hidden="true"></label></div><p class="hint">Limite connue : en HTTP/2 et HTTP/3, le corps d'une requête sans Content-Length n'est pas inspecté par le WAF.</p>{{end}}{{end}}
-{{if eq .Kind "proxy"}}<label class="f">Affichage dans une iframe<select class="t" name="frame"><option value="">Autorisé</option><option value="SAMEORIGIN"{{if eq .FrameOptions "SAMEORIGIN"}} selected{{end}}>Seulement depuis ce même domaine</option><option value="DENY"{{if eq .FrameOptions "DENY"}} selected{{end}}>Interdit</option></select></label>{{end}}
-<div class="switch"><label for="noindex"><b>Masquer des moteurs de recherche</b></label><input type="checkbox" id="noindex" name="noindex" value="1"{{if .NoIndex}} checked{{end}}><label for="noindex" class="tog" aria-hidden="true"></label></div>
+
+<section class="grp" id="acces"><h3>{{if eq .Kind "proxy"}}Accès et protection{{else}}Protection{{end}}</h3>
+{{if eq .Kind "proxy"}}{{if .Lists}}<label class="f">Accès<select class="t" name="access"><option value="0">Public : tout le monde</option>{{range .Lists}}<option value="{{.ID}}"{{if eq $.AccessID .ID}} selected{{end}}>Limité à « {{.Name}} »</option>{{end}}</select><small><a class="inline-link" href="/security/protection#listes">Gérer les listes d'accès</a></small></label>{{end}}
+{{if or .WAFAvailable .WAF}}<div class="switch"><label for="waf"><b>WAF (CrowdSec AppSec)</b><small>Bloque les attaques connues (fichiers sensibles, injections).</small></label><input type="checkbox" id="waf" name="waf" value="1"{{if .WAF}} checked{{end}}><label for="waf" class="tog" aria-hidden="true"></label></div><p class="hint">Limite connue : en HTTP/2 et HTTP/3, le corps d'une requête sans Content-Length n'est pas inspecté par le WAF.</p>{{end}}
+<label class="f">Affichage dans une iframe<select class="t" name="frame"><option value="">Autorisé</option><option value="SAMEORIGIN"{{if eq .FrameOptions "SAMEORIGIN"}} selected{{end}}>Seulement depuis ce même domaine</option><option value="DENY"{{if eq .FrameOptions "DENY"}} selected{{end}}>Interdit</option></select></label>{{end}}
+<div class="switch"><label for="noindex"><b>Masquer des moteurs de recherche</b><small>Ajoute X-Robots-Tag: noindex.</small></label><input type="checkbox" id="noindex" name="noindex" value="1"{{if .NoIndex}} checked{{end}}><label for="noindex" class="tog" aria-hidden="true"></label></div>
 </section>
-{{if eq .Kind "proxy"}}<section class="grp"><h3>Chemins</h3>
+{{if eq .Kind "proxy"}}<section class="grp" id="chemins"><h3>Chemins</h3>
 <p class="hint">Une règle par chemin : par exemple /api vers un autre service.</p>
 <div class="locs"><div id="loc-rows">{{range .LocRows}}{{template "locrow" .}}{{end}}</div><div><button type="button" class="linkbtn" hx-get="/hosts/locations/row" hx-target="#loc-rows" hx-swap="beforeend">+ Ajouter une règle</button></div></div>
 </section>{{end}}
-{{if eq .Kind "proxy"}}<section class="grp"><h3>Performances</h3>
-<div class="switch"><label for="compress"><b>Compression</b></label><input type="checkbox" id="compress" name="compress" value="1"{{if .Compress}} checked{{end}}><label for="compress" class="tog" aria-hidden="true"></label></div>
+<section class="grp" id="avance"><h3>Avancé</h3>
+{{if eq .Kind "proxy"}}<div class="switch"><label for="compress"><b>Compression</b><small>gzip et zstd pour le texte.</small></label><input type="checkbox" id="compress" name="compress" value="1"{{if .Compress}} checked{{end}}><label for="compress" class="tog" aria-hidden="true"></label></div>
 <div class="switch"><label for="no_buffering"><b>Désactiver le buffering (streaming)</b><small>Pour les flux en direct, SSE, vidéo</small></label><input type="checkbox" id="no_buffering" name="no_buffering" value="1"{{if .NoBuffering}} checked{{end}}><label for="no_buffering" class="tog" aria-hidden="true"></label></div>
-<div class="switch"><label for="tls_skip_verify"><b>Ne pas vérifier le certificat du service</b><small>Pour un service en https:// à certificat auto-signé ou expiré (NAS, routeur). À réserver à un réseau de confiance.</small></label><input type="checkbox" id="tls_skip_verify" name="tls_skip_verify" value="1"{{if .TLSSkipVerify}} checked{{end}}><label for="tls_skip_verify" class="tog" aria-hidden="true"></label></div>
-</section>{{end}}
-
+<div class="switch"><label for="tls_skip_verify"><b>Ne pas vérifier le certificat du service</b><small>Pour un service en https:// à certificat auto-signé ou expiré (NAS, routeur). À réserver à un réseau de confiance.</small></label><input type="checkbox" id="tls_skip_verify" name="tls_skip_verify" value="1"{{if .TLSSkipVerify}} checked{{end}}><label for="tls_skip_verify" class="tog" aria-hidden="true"></label></div>{{end}}
+<details class="preview-toggle"><summary>Configuration Caddy générée</summary><div class="slot" hx-post="/hosts/check/preview" hx-trigger="{{if .Editing}}load, {{end}}input from:closest form delay:600ms" hx-include="closest form" hx-swap="innerHTML"><small class="muted">Aperçu indisponible.</small></div></details>
+</section>
 </div>
 
-<div class="actions"><button class="btn primary" type="submit">{{.Submit}}</button>{{if .CanForce}}<button class="btn danger" type="submit" name="force" value="1">{{if .Editing}}Enregistrer quand même{{else}}Créer quand même{{end}}</button>{{end}}<a class="btn" href="{{.ListPath}}">Annuler</a></div>
-</div></div>
-
-<div class="publish-aside"><div class="card check-card compact-checks"><h2>Vérifications</h2><div id="checks" class="check" aria-live="polite">
-<div class="slot" hx-post="/hosts/check/dns" hx-trigger="{{if .Editing}}load, {{end}}input from:closest form delay:600ms" hx-include="closest form" hx-swap="innerHTML">{{if .Checks}}{{template "checks" .Checks}}{{else}}<small class="muted">DNS</small>{{end}}<small class="muted wait">Vérification du DNS…</small></div>
-{{if ne .Kind "404"}}<div class="slot" hx-post="/hosts/check/target" hx-trigger="{{if .Editing}}load, {{end}}input from:closest form delay:600ms" hx-include="closest form" hx-swap="innerHTML"><small class="muted wait">{{if eq .Kind "redirect"}}Destination{{else}}Cible{{end}}</small></div>{{end}}
-</div>
-<details class="preview-toggle" open><summary>Configuration Caddy</summary><div class="slot" hx-post="/hosts/check/preview" hx-trigger="{{if .Editing}}load, {{end}}input from:closest form delay:600ms" hx-include="closest form" hx-swap="innerHTML"><small class="muted">Aperçu indisponible.</small></div></details>
-</div></div></form>{{end}}
+<div class="actions"><button class="btn primary" type="submit">{{.Submit}}</button>{{if .CanForce}}<button class="btn danger" type="submit" name="force" value="1">{{if .Editing}}Enregistrer quand même{{else}}Créer quand même{{end}}</button>{{end}}<a class="btn ghost" href="{{.ListPath}}">Annuler</a></div>
+</div></div></form>
+{{if .Editing}}<div class="section-title"><h2>Dernières requêtes</h2><a class="inline-link" href="/stats">Tout le trafic →</a></div>
+<div class="card tablecard">{{if .HostRecent}}<table class="resp"><thead><tr><th>Heure</th><th>Visiteur</th><th>Requête</th><th>Statut</th></tr></thead><tbody>{{range .HostRecent}}<tr><td data-l="Heure">{{.Time}}</td><td data-l="Visiteur" class="mono">{{.IP}}</td><td data-l="Requête" class="mono">{{.Request}}</td><td data-l="Statut"><span class="pill {{.Class}}">{{.Status}}</span></td></tr>{{end}}</tbody></table>{{else}}<p class="muted">Aucune requête pour cet hôte : elles apparaissent ici dès qu'un visiteur passe par Gatewyn.</p>{{end}}</div>{{end}}{{end}}
 
 {{define "checks"}}{{range .}}<div><span class="pill {{.Class}}">{{.Label}}</span><span>{{.Message}}</span></div>{{end}}{{end}}
 

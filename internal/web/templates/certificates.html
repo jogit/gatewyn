@@ -1,7 +1,13 @@
 {{define "content"}}<header class="top publish-head"><h1>Certificats</h1></header>
-{{if .Certs}}<div class="card tablecard"><table class="resp"><thead><tr><th>Domaine</th><th>Émetteur</th><th>Défi configuré</th><th>Émis le</th><th>Expire dans</th></tr></thead>
-<tbody>{{range .Certs}}<tr><td><b>{{.Domain}}</b>{{if .Covers}}<br><small class="muted">couvre aussi {{.Covers}}</small>{{end}}</td><td data-l="Émetteur">{{.Issuer}}</td><td data-l="Défi">{{.Challenge}}</td><td data-l="Émis le">{{.Issued}}</td><td data-l="Expire"><span class="pill {{.Class}}">{{.Left}}</span><br><small class="muted">le {{.ExpiresOn}}</small></td></tr>{{end}}</tbody></table></div>
+<div id="flash" aria-live="polite">{{if .Flash}}<div class="note"><span class="pill ok">OK</span> {{.Flash}}</div>{{end}}</div>
+{{if .Certs}}<div class="card tablecard"><table class="resp"><thead><tr><th>Domaine</th><th>Défi configuré</th><th>Émetteur</th><th>Émis le</th><th class="right">Expire dans</th></tr></thead>
+<tbody>{{range .Certs}}<tr><td><b>{{.Domain}}</b>{{if .Covers}}<br><small class="muted">couvre aussi {{.Covers}}</small>{{end}}</td><td data-l="Défi">{{.Challenge}}</td><td data-l="Émetteur">{{.Issuer}}</td><td data-l="Émis le">{{.Issued}}</td><td class="right" data-l="Expire"><span class="pill {{.Class}}">{{.Left}}</span><br><small class="muted">le {{.ExpiresOn}}</small></td></tr>{{end}}</tbody></table></div>
 {{else if .CertsReadable}}<div class="card empty"><p><b>Aucun certificat pour l'instant.</b></p><p class="muted">Ils apparaissent après la première visite d'un domaine publié. Caddy les renouvelle tout seul.</p></div>
 {{else}}<div class="card"><p>Gatewyn ne peut pas lire les certificats de Caddy dans cette configuration.</p><p class="muted">Avec l'image Docker de Gatewyn, cette page fonctionne sans réglage.</p></div>{{end}}
-{{if .RootCert}}<div class="card mt"><div class="cardhead"><h2>Certificat racine de Caddy</h2><a class="btn sm" href="/certificates/root.crt">Télécharger</a></div>
-<p class="muted"><small>Pour les hôtes « Auto-signé » : installez-le sur chaque appareil (autorités racine de confiance) pour supprimer l'avertissement du navigateur.</small></p></div>{{end}}{{end}}
+{{if .CertsReadable}}<p class="foot">Caddy renouvelle chaque certificat 30 jours avant son expiration. Un certificat apparaît après la première visite du domaine.</p>{{end}}
+
+<div class="section-title" id="dns"><div><h2>Comptes DNS</h2><p class="muted">Pour obtenir un certificat sans ouvrir le port 80, ou pour tout un domaine (*.example.com).</p></div><a class="btn sm" href="/certificates/dns/new">+ Ajouter un compte</a></div>
+<div class="card rows">{{if .DNS}}<div class="list">{{range .DNS}}<div class="row"><div class="grow"><b>{{.Name}}</b><br><small class="muted">{{.Provider}}</small></div><span class="muted">{{.Hosts}} hôte{{if gt .Hosts 1}}s{{end}}</span><a class="btn sm" href="/certificates/dns/{{.ID}}/edit">Modifier</a></div>{{end}}</div>{{else}}<p class="muted">Aucun compte pour l'instant. Cloudflare, OVH, Gandi, Route 53 et d'autres.</p>{{end}}</div>
+<p class="foot">Identifiants chiffrés dans la base, jamais réaffichés. Donnez au jeton le minimum de droits : modifier les enregistrements de la zone.</p>
+
+{{if .RootCert}}<div class="section-title"><div><h2>Certificat racine de Caddy</h2><p class="muted">Pour les hôtes « Auto-signé » : installez-le sur chaque appareil (autorités racine de confiance) pour supprimer l'avertissement du navigateur.</p></div><a class="btn sm" href="/certificates/root.crt">Télécharger</a></div>{{end}}{{end}}

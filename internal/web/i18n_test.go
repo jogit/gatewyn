@@ -40,7 +40,7 @@ import (
 // sigles, valeurs d'exemple). Ils n'ont pas besoin d'entrée dans le catalogue.
 var neutral = map[string]bool{
 	"OK": true, "Site": true, "WAF": true, "Caddy": true, "CrowdSec": true, "AppSec": true, "GoAccess": true, "Gatewyn": true, "TLS": true,
-	"HTTPS": true, "HSTS": true, "DNS": true, "WAF (CrowdSec AppSec)": true, "Services": true,
+	"HTTPS": true, "HSTS": true, "DNS": true, "WAF (CrowdSec AppSec)": true, "Services": true, "Service": true,
 	"Compression": true, "Protection": true, "Public": true, "Destination": true, "Type": true, "Applications": true,
 	"Administration": true, "Interface ↗": true, "· Gatewyn": true, "cscli bouncers add gatewyn": true, ".env": true,
 	"COMPOSE_PROFILES=crowdsec": true, "COMPOSE_PROFILES=stats": true, "COMPOSE_PROFILES=crowdsec,stats": true,

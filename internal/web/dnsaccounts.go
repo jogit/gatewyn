@@ -101,24 +101,14 @@ func fieldViews(providerID string, values map[string]string, edit bool) []fieldV
 	return out
 }
 
+// dnsAccountsPage : les comptes DNS se lisent sur la page Certificats.
 func (s *Server) dnsAccountsPage(w http.ResponseWriter, r *http.Request) {
-	p := s.authedPage(r, "Comptes DNS", "dns")
-	p.DNS = s.dnsViews(r.Context())
-	q := r.URL.Query()
-	switch {
-	case q.Get("added") != "":
-		p.Flash = fmt.Sprintf("Le compte « %s » est créé.", q.Get("added"))
-	case q.Get("changed") != "":
-		p.Flash = fmt.Sprintf("Le compte « %s » est mis à jour.", q.Get("changed"))
-	case q.Get("deleted") != "":
-		p.Flash = fmt.Sprintf("Le compte « %s » est supprimé.", q.Get("deleted"))
-	}
-	s.render(w, "dnsaccounts", p)
+	http.Redirect(w, r, "/certificates#dns", http.StatusSeeOther)
 }
 
 func (s *Server) dnsFormPage(r *http.Request, old *store.DNSAccount) page {
 	p := s.authedPage(r, "Nouveau compte DNS", "dns")
-	p.Heading, p.Action, p.Submit, p.ListPath = "Nouveau compte DNS", "/certificates/dns", "Créer le compte", "/certificates/dns"
+	p.Heading, p.Action, p.Submit, p.ListPath = "Nouveau compte DNS", "/certificates/dns", "Créer le compte", "/certificates#dns"
 	p.Providers = dnsprov.All()
 	p.ProviderID = p.Providers[0].ID
 	p.DNSFields = fieldViews(p.ProviderID, nil, false)
@@ -264,7 +254,7 @@ func (s *Server) saveDNS(w http.ResponseWriter, r *http.Request, old *store.DNSA
 		key, action = "changed", "dns.update"
 	}
 	s.audit(ctx, action, p.Name+" ("+providerID+")")
-	http.Redirect(w, r, "/certificates/dns?"+key+"="+template.URLQueryEscaper(p.Name), http.StatusSeeOther)
+	http.Redirect(w, r, "/certificates?"+key+"="+template.URLQueryEscaper(p.Name)+"#dns", http.StatusSeeOther)
 }
 
 func (s *Server) deleteDNS(w http.ResponseWriter, r *http.Request) {
@@ -283,6 +273,6 @@ func (s *Server) deleteDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r.Context(), "dns.delete", a.Name)
-	w.Header().Set("HX-Redirect", "/certificates/dns?deleted="+template.URLQueryEscaper(a.Name))
+	w.Header().Set("HX-Redirect", "/certificates?deleted="+template.URLQueryEscaper(a.Name)+"#dns")
 	w.WriteHeader(http.StatusOK)
 }

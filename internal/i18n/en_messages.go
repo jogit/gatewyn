@@ -4,6 +4,21 @@ package i18n
 // confirmations). Chaque clé est le texte exact du code, avec %s, %d ou %q pour la partie variable.
 var messageEntries = []entry{
 	// Connexion, installation, mot de passe
+	{"Aucune", "None"},
+	{"Interne (Caddy)", "Internal (Caddy)"},
+	{"Caddy (interne)", "Caddy (internal)"},
+	{"%d autre alerte", "%d other alert"},
+	{"%d autres alertes", "%d other alerts"},
+	{"%s · expire dans %s", "%s · expires in %s"},
+	{"Un certificat apparaît après la première visite du domaine.", "A certificate appears after the first visit to the domain."},
+	{"%d requête", "%d request"},
+	{"%d requêtes", "%d requests"},
+	{"0 requête", "0 requests"},
+	{"rien dans le journal", "nothing in the log"},
+	{"blocage des adresses signalées", "blocking of flagged addresses"},
+	{"adresses signalées et attaques connues", "flagged addresses and known attacks"},
+	{"CrowdSec n'est pas connecté", "CrowdSec is not connected"},
+	{"CrowdSec est désactivé : Caddy ne bloque plus ces adresses.", "CrowdSec is disabled: Caddy no longer blocks these addresses."},
 	{"Le mot de passe actuel est incorrect.", "The current password is incorrect."},
 	{"Trop d'essais. Réessayez dans quelques minutes.", "Too many attempts. Try again in a few minutes."},
 	{"Le mot de passe est modifié. Les autres sessions sont fermées.", "The password is changed. Other sessions are signed out."},

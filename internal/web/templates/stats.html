@@ -1,4 +1,4 @@
-{{define "content"}}<header class="top publish-head"><h1>Statistiques</h1>{{if and .GoAccessUp .GoAccessReport}}<a class="btn primary" href="{{.GoAccessReport}}" target="_blank" rel="noopener">Ouvrir le rapport ↗</a>{{end}}</header>
+{{define "content"}}<header class="top publish-head"><h1>Trafic</h1>{{if and .GoAccessUp .GoAccessReport}}<a class="btn primary" href="{{.GoAccessReport}}" target="_blank" rel="noopener">Ouvrir le rapport ↗</a>{{end}}</header>
 {{if .Error}}<div class="note" role="alert"><span class="pill err">Erreur</span> {{.Error}}</div>{{end}}
 {{if not .AccessLogOn}}<div class="card empty"><p><b>Le journal d'accès est désactivé.</b></p><p class="muted">Les statistiques lisent le journal d'accès de Caddy. Tant qu'il est désactivé, aucune donnée sur vos visiteurs n'est conservée. La durée de conservation se règle dans <a class="inline-link" href="/settings">Réglages</a>.</p>{{if .AccessLogAvail}}<form method="post" action="/stats/journal"><button class="btn primary" type="submit">Activer le journal (30 jours)</button></form>{{end}}</div>
 {{else}}<div class="status-grid stats-grid">
@@ -7,7 +7,10 @@
 <article class="status-cell {{if .StatsSum.Errors}}err{{end}}"><span>Erreurs</span><strong>{{.StatsSum.Errors}}</strong><p>réponses 4xx et 5xx</p></article>
 </div>
 {{if not .GoAccessUp}}<div class="card stats-install"><div><b>Rapport détaillé avec GoAccess</b><p class="muted">Pages les plus vues, pays, navigateurs, évolution dans le temps. Facultatif.</p></div><a class="btn primary" href="/stats/install">Installer GoAccess <span aria-hidden="true">→</span></a></div>{{end}}
-<div class="card tablecard mt"><div class="cardhead"><h2>Dernières requêtes</h2></div>
+{{if .StatsSum.Hosts}}<div class="section-title"><h2>Par hôte</h2></div>
+<div class="card tablecard"><table class="resp"><thead><tr><th>Hôte</th><th class="bars"></th><th class="right">Requêtes</th><th class="right">Erreurs</th></tr></thead><tbody>{{range .StatsSum.Hosts}}<tr><td><b>{{.Host}}</b></td><td class="bars"><div class="bar"><i style="width:{{.Pct}}%"></i></div></td><td class="right" data-l="Requêtes">{{.Requests}}</td><td class="right{{if .Errs}} t-err{{end}}" data-l="Erreurs">{{.Errs}}</td></tr>{{end}}</tbody></table></div>{{end}}
+<div class="section-title"><h2>Dernières requêtes</h2><div class="chips" role="group" aria-label="Filtrer les requêtes"><button type="button" class="chip on" data-rfilter="all">Toutes</button><button type="button" class="chip" data-rfilter="err">Erreurs</button></div></div>
+<div class="card tablecard">
 {{if .Recent}}<table class="resp"><thead><tr><th>Heure</th><th>Visiteur</th><th>Hôte</th><th>Requête</th><th>Statut</th></tr></thead>
-<tbody>{{range .Recent}}<tr><td data-l="Heure">{{.Time}}</td><td data-l="Visiteur" class="mono">{{.IP}}</td><td data-l="Hôte">{{.Host}}</td><td data-l="Requête" class="mono">{{.Request}}</td><td data-l="Statut"><span class="pill {{.Class}}">{{.Status}}</span></td></tr>{{end}}</tbody></table>
+<tbody>{{range .Recent}}<tr data-class="{{.Class}}"><td data-l="Heure">{{.Time}}</td><td data-l="Visiteur" class="mono">{{.IP}}</td><td data-l="Hôte">{{.Host}}</td><td data-l="Requête" class="mono">{{.Request}}</td><td data-l="Statut"><span class="pill {{.Class}}">{{.Status}}</span></td></tr>{{end}}</tbody></table>
 {{else}}<p class="muted">Aucune requête pour l'instant : elles apparaissent ici dès qu'un visiteur passe par Gatewyn.</p>{{end}}</div>{{end}}{{end}}

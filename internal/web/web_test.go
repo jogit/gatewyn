@@ -542,8 +542,8 @@ func TestToggleAndDeleteHostFromEditPage(t *testing.T) {
 		}
 	}
 	_, list := e.do("GET", "/hosts", nil)
-	if strings.Contains(list, ">Désactiver<") || strings.Contains(list, ">Supprimer<") || !strings.Contains(list, ">Modifier<") {
-		t.Error("la liste ne doit proposer que « Modifier »")
+	if strings.Contains(list, ">Désactiver<") || strings.Contains(list, ">Supprimer<") || !strings.Contains(list, `href="`+path+`/edit"`) {
+		t.Error("la liste ne doit proposer que le lien vers la page Modifier")
 	}
 
 	// Désactiver : retour à la liste avec un message, et Caddy ne publie plus l'hôte.
@@ -966,7 +966,7 @@ func TestEditRedirectRollsBackWhenCaddyRefuses(t *testing.T) {
 	}
 }
 
-func TestFirstFormShowsOnlyTwoFieldsAndHidesOtherTypes(t *testing.T) {
+func TestFirstFormShowsTheTypePickerThenDomainAndTarget(t *testing.T) {
 	e := newEnv(t)
 	e.setup()
 	_, body := e.do("GET", "/hosts/new", nil)
@@ -980,8 +980,12 @@ func TestFirstFormShowsOnlyTwoFieldsAndHidesOtherTypes(t *testing.T) {
 			t.Errorf("formulaire d'accueil sans %q", want)
 		}
 	}
-	if strings.Contains(body, "Autre besoin") || strings.Contains(body, "kind=") {
-		t.Error("le formulaire d'accueil ne doit proposer aucun autre type d'hôte")
+	// Le choix du type (service, redirection, page 404) vient en premier ; les réglages propres à une
+	// redirection n'apparaissent qu'une fois ce type choisi.
+	for _, want := range []string{`href="/hosts/new?kind=redirect"`, `href="/hosts/new?kind=404"`, `aria-current="true"`, "Redirection", "Page 404"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("le formulaire d'accueil doit proposer le type : %q manque", want)
+		}
 	}
 }
 
@@ -992,14 +996,14 @@ func TestHostsListSearchAndRow(t *testing.T) {
 	e.addHost("photos.example.com", "http://192.0.2.22:2283")
 	e.post("/hosts", url.Values{"kind": {"404"}, "domain": {"gone.example.com"}})
 
-	// Page complète : domaine en gras, cible en dessous, un seul bouton « Modifier » ; pas de colonne « Type ».
+	// Page complète : domaine en gras, cible en dessous, la ligne entière mène à la page Modifier.
 	_, body := e.do("GET", "/hosts", nil)
-	for _, want := range []string{`<b>wiki.example.com</b>`, `class="mono muted">http://192.0.2.21:8080`, ">Modifier<", `type="search"`, "<th>État</th><th>Hôte</th>"} {
+	for _, want := range []string{`<b>wiki.example.com</b>`, `class="dest">http://192.0.2.21:8080`, `/edit"`, `type="search"`, "<span>Domaine</span><span>Destination</span>"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("liste sans %q", want)
 		}
 	}
-	for _, bad := range []string{">Type<", `class="menu"`, "gone.example.com"} {
+	for _, bad := range []string{`class="menu"`, "gone.example.com"} {
 		if strings.Contains(body, bad) {
 			t.Errorf("la liste contient %q", bad)
 		}
@@ -1007,8 +1011,8 @@ func TestHostsListSearchAndRow(t *testing.T) {
 	// Recherche par domaine, par cible, sans tenir compte de la casse (services seulement).
 	for q, want := range map[string]string{"wiki": "wiki.example.com", "2283": "photos.example.com", "PHOTOS": "photos.example.com"} {
 		_, b := e.do("GET", "/hosts?q="+q, nil)
-		if !strings.Contains(b, want) || strings.Count(b, `<tr id="host-`) != 1 {
-			t.Errorf("recherche %q : %d lignes", q, strings.Count(b, `<tr id="host-`))
+		if !strings.Contains(b, want) || strings.Count(b, ` id="host-`) != 1 {
+			t.Errorf("recherche %q : %d lignes", q, strings.Count(b, ` id="host-`))
 		}
 	}
 	_, b := e.do("GET", "/hosts?q=rien-de-tel", nil)
@@ -1072,7 +1076,7 @@ func TestRedirectAndNotFoundListsAndMenu(t *testing.T) {
 	e.post("/hosts", url.Values{"domain": {"wiki.example.com"}, "target": {"192.0.2.21:8080"}})
 
 	_, body := e.do("GET", "/redirections", nil)
-	for _, w := range []string{"old.example.com", "→\u00a0https://nouveau.example.org", "Temporaire", "garde le chemin", "<th>Type</th>", "Nouvelle redirection", `href="/redirections" class="on"`} {
+	for _, w := range []string{"old.example.com", "→\u00a0https://nouveau.example.org", "Temporaire", "garde le chemin", "Nouvelle redirection", `class="chip on" href="/redirections"`} {
 		if !strings.Contains(body, w) {
 			t.Errorf("/redirections sans %q", w)
 		}
@@ -1083,11 +1087,11 @@ func TestRedirectAndNotFoundListsAndMenu(t *testing.T) {
 		}
 	}
 	_, body = e.do("GET", "/erreurs-404", nil)
-	if !strings.Contains(body, "vieux.example.com") || !strings.Contains(body, "Répond « 404 Not Found »") || strings.Contains(body, "old.example.com") || strings.Contains(body, "<th>Type</th>") {
+	if !strings.Contains(body, "vieux.example.com") || !strings.Contains(body, "Répond « 404 Not Found »") || strings.Contains(body, "old.example.com") {
 		t.Error("/erreurs-404 : contenu inattendu")
 	}
 	_, body = e.do("GET", "/hosts", nil)
-	if !strings.Contains(body, "wiki.example.com") || strings.Contains(body, "old.example.com") || !strings.Contains(body, `<a href="/erreurs-404">Erreurs 404</a>`) {
+	if !strings.Contains(body, "wiki.example.com") || strings.Contains(body, "old.example.com") || !strings.Contains(body, `href="/erreurs-404"`) {
 		t.Error("/ : contenu ou menu inattendu")
 	}
 
@@ -1110,11 +1114,11 @@ func TestDashboardShowsOnlineHostsAndEvents(t *testing.T) {
 	e.setup()
 	_, body := e.do("GET", "/", nil)
 	// Sans hôte : l'accueil pour le premier service, pas de cases de chiffres.
-	if !strings.Contains(body, "Vue d&#39;ensemble") || !strings.Contains(body, "Publiez votre premier service") || !strings.Contains(body, "Rien pour l'instant") || strings.Contains(body, `hx-get="/dashboard/online"`) || strings.Contains(body, "Votre passerelle") {
+	if !strings.Contains(body, "Publiez votre premier service") || strings.Contains(body, `hx-get="/dashboard/online"`) || strings.Contains(body, "Votre passerelle") {
 		t.Errorf("vue d'ensemble vide : contenu inattendu : %s", body)
 	}
 	_, frag := e.do("GET", "/dashboard/online", nil)
-	if !strings.Contains(frag, "Publier un premier service") {
+	if !strings.Contains(frag, "Aucun service à vérifier") {
 		t.Errorf("aucun hôte : %s", frag)
 	}
 
@@ -1125,8 +1129,9 @@ func TestDashboardShowsOnlineHostsAndEvents(t *testing.T) {
 	if !strings.Contains(body, `hx-get="/dashboard/online"`) || strings.Contains(body, "Publiez votre premier service") {
 		t.Error("cases de chiffres absentes alors que des hôtes existent")
 	}
-	if !strings.Contains(body, "Hôte vieux.example.com créé") || !strings.Contains(body, "à l&#39;instant") {
-		t.Errorf("événements absents : %s", body)
+	_, settings := e.do("GET", "/settings", nil)
+	if !strings.Contains(settings, "Hôte vieux.example.com créé") || !strings.Contains(settings, "à l&#39;instant") {
+		t.Errorf("événements absents du journal d'audit : %s", settings)
 	}
 	_, frag = e.do("GET", "/dashboard/online", nil)
 	if !strings.Contains(frag, "2 / 2") || !strings.Contains(frag, "Tous répondent") {
@@ -1229,7 +1234,7 @@ func TestNoLoginSkipsAuthentication(t *testing.T) {
 func TestAccessListsLifecycle(t *testing.T) {
 	e := newEnv(t)
 	e.setup()
-	_, body := e.do("GET", "/security/access", nil)
+	_, body := e.do("GET", "/security/protection", nil)
 	if !strings.Contains(body, "Aucune liste pour l'instant") {
 		t.Error("état vide absent")
 	}
@@ -1244,7 +1249,7 @@ func TestAccessListsLifecycle(t *testing.T) {
 	}
 
 	resp, _ = e.post("/security/lists", url.Values{"name": {"Bureau"}, "addresses": {"192.0.2.9/24, 198.51.100.7\n2001:db8::1"}})
-	if resp.StatusCode != 303 || !strings.HasPrefix(resp.Header.Get("Location"), "/security/access?added=Bureau") {
+	if resp.StatusCode != 303 || !strings.HasPrefix(resp.Header.Get("Location"), "/security/protection?added=Bureau") {
 		t.Fatalf("création : %d %s", resp.StatusCode, resp.Header.Get("Location"))
 	}
 	lists, _ := e.srv.cfg.Store.AccessLists(context.Background())
@@ -1254,7 +1259,7 @@ func TestAccessListsLifecycle(t *testing.T) {
 	if resp, _ := e.post("/security/lists", url.Values{"name": {"Bureau"}, "addresses": {"192.0.2.7"}}); resp.StatusCode != 409 {
 		t.Errorf("doublon : %d", resp.StatusCode)
 	}
-	_, body = e.do("GET", "/security/access", nil)
+	_, body = e.do("GET", "/security/protection", nil)
 	if !strings.Contains(body, "Bureau") || !strings.Contains(body, "192.0.2.0/24 · 198.51.100.7") {
 		t.Error("liste absente de la page")
 	}
@@ -1269,7 +1274,7 @@ func TestAccessListsLifecycle(t *testing.T) {
 		t.Errorf("après modification : %+v", lists)
 	}
 	resp, _ = e.post("/security/lists/"+id+"/delete", nil)
-	if resp.Header.Get("HX-Redirect") != "/security/access?deleted=Bureau" {
+	if resp.Header.Get("HX-Redirect") != "/security/protection?deleted=Bureau#listes" {
 		t.Errorf("suppression : %q", resp.Header.Get("HX-Redirect"))
 	}
 	if lists, _ = e.srv.cfg.Store.AccessLists(context.Background()); len(lists) != 0 {
@@ -1313,7 +1318,7 @@ func TestHostAccessList(t *testing.T) {
 	if !strings.Contains(body, `value="`+itoa(listID)+`" selected`) {
 		t.Error("liste non présélectionnée")
 	}
-	_, body = e.do("GET", "/security/access", nil)
+	_, body = e.do("GET", "/security/protection", nil)
 	if !strings.Contains(body, "1 hôte<") {
 		t.Errorf("compteur d'hôtes absent : %s", body)
 	}
@@ -1343,7 +1348,7 @@ func TestHostAccessList(t *testing.T) {
 	if got := e.caddy.last(); len(got[0].Access) != 0 {
 		t.Errorf("hôte public : %+v", got)
 	}
-	if resp, _ := e.post("/security/lists/"+itoa(listID)+"/delete", nil); resp.Header.Get("HX-Redirect") != "/security/access?deleted=Bureau" {
+	if resp, _ := e.post("/security/lists/"+itoa(listID)+"/delete", nil); resp.Header.Get("HX-Redirect") != "/security/protection?deleted=Bureau#listes" {
 		t.Errorf("suppression : %q", resp.Header.Get("HX-Redirect"))
 	}
 }
@@ -1403,7 +1408,7 @@ func TestDNSAccountsLifecycleAndChallenge(t *testing.T) {
 	}
 	resp, _ := e.post("/certificates/dns", url.Values{"name": {"Mon OVH"}, "provider": {"ovh"}, "f_endpoint": {"ovh-eu"},
 		"f_application_key": {"ak-fictif"}, "f_application_secret": {"as-secret-fictif"}, "f_consumer_key": {"ck-secret-fictif"}})
-	if resp.StatusCode != 303 || !strings.HasPrefix(resp.Header.Get("Location"), "/certificates/dns?added=") {
+	if resp.StatusCode != 303 || !strings.HasPrefix(resp.Header.Get("Location"), "/certificates?added=") {
 		t.Fatalf("création : %d %s", resp.StatusCode, resp.Header.Get("Location"))
 	}
 	accounts, _ := e.srv.cfg.Store.DNSAccounts(ctx)
@@ -1449,7 +1454,7 @@ func TestDNSAccountsLifecycleAndChallenge(t *testing.T) {
 	if withDNS != 1 || without != 1 {
 		t.Errorf("publication : %+v", e.caddy.last())
 	}
-	_, body = e.do("GET", "/certificates/dns", nil)
+	_, body = e.do("GET", "/certificates", nil)
 	if !strings.Contains(body, "Mon OVH") || !strings.Contains(body, "1 hôte<") || strings.Contains(body, "secret-fictif") {
 		t.Error("page Certificats : compte absent, compteur faux ou secret affiché")
 	}
@@ -1465,7 +1470,7 @@ func TestDNSAccountsLifecycleAndChallenge(t *testing.T) {
 			e.post("/hosts/"+itoa(h.ID), url.Values{"domain": {h.Domain}, "dns": {"0"}})
 		}
 	}
-	if resp, _ := e.post("/certificates/dns/"+id+"/delete", nil); resp.Header.Get("HX-Redirect") != "/certificates/dns?deleted=Mon+OVH" {
+	if resp, _ := e.post("/certificates/dns/"+id+"/delete", nil); resp.Header.Get("HX-Redirect") != "/certificates?deleted=Mon+OVH#dns" {
 		t.Errorf("suppression : %q", resp.Header.Get("HX-Redirect"))
 	}
 }
@@ -1566,12 +1571,11 @@ func TestDNSAccountsHaveTheirOwnPageUnderCertificates(t *testing.T) {
 	e.setup()
 	e.srv.cfg.CertDir = t.TempDir()
 	_, certs := e.do("GET", "/certificates", nil)
-	if strings.Contains(certs, "Nouveau compte") || !strings.Contains(certs, `<a href="/certificates/dns">Comptes DNS</a>`) {
-		t.Error("/certificates : la carte des comptes DNS doit avoir disparu et le sous-menu être présent")
+	if !strings.Contains(certs, `id="dns"`) || !strings.Contains(certs, "Comptes DNS") || !strings.Contains(certs, `href="/certificates/dns/new"`) {
+		t.Error("/certificates : la section des comptes DNS est absente")
 	}
-	_, dns := e.do("GET", "/certificates/dns", nil)
-	if !strings.Contains(dns, "Nouveau compte") || !strings.Contains(dns, `href="/certificates/dns" class="on"`) || !strings.Contains(dns, "Cloudflare") {
-		t.Error("/certificates/dns : page des comptes DNS incomplète")
+	if resp, _ := e.do("GET", "/certificates/dns", nil); resp.StatusCode != 303 || resp.Header.Get("Location") != "/certificates#dns" {
+		t.Errorf("/certificates/dns doit renvoyer vers la section : %d %q", resp.StatusCode, resp.Header.Get("Location"))
 	}
 }
 
@@ -1803,7 +1807,7 @@ func TestHostLocations(t *testing.T) {
 			t.Errorf("page Modifier sans %q", w)
 		}
 	}
-	_, sec := e.do("GET", "/security/access", nil)
+	_, sec := e.do("GET", "/security/protection", nil)
 	if strings.Count(sec, "1 hôte<") != 2 {
 		t.Errorf("compteurs de la page Sécurité : %s", sec)
 	}
@@ -1862,7 +1866,7 @@ func TestCrowdSecConnectionLifecycle(t *testing.T) {
 	if !strings.Contains(body, "Installer CrowdSec") || !strings.Contains(body, "J'utilise déjà CrowdSec") || strings.Contains(body, "/security/crowdsec/status") {
 		t.Error("carte CrowdSec non connecté : contenu inattendu")
 	}
-	for _, want := range []string{`<span>Sécurité</span>`, `href="/security/protection"`, `href="/security/access"`, `href="/security/proxies"`, "Protection CrowdSec", "Accès réseau", "Proxies de confiance"} {
+	for _, want := range []string{`<span>Sécurité</span>`, `href="/security/protection"`, `id="listes"`, `id="proxies"`, "Protection CrowdSec", "Listes d'accès", "Proxies de confiance"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("menu Sécurité sans %q", want)
 		}
@@ -1935,13 +1939,16 @@ func TestCrowdSecConnectionLifecycle(t *testing.T) {
 	if !strings.Contains(body, `hx-get="/security/crowdsec/status"`) || !strings.Contains(body, "Désactiver") || strings.Contains(body, "cle-fictive") {
 		t.Error("carte CrowdSec connecté : contenu inattendu")
 	}
-	for _, want := range []string{`href="/security/protection" class="on"`, `href="/security/access"`, "Protection CrowdSec"} {
+	for _, want := range []string{`class="nav on"`, `id="listes"`, "Protection CrowdSec"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("organisation Sécurité sans %q", want)
 		}
 	}
-	if _, access := e.do("GET", "/security/access", nil); !strings.Contains(access, `href="/security/access" class="on"`) || !strings.Contains(access, "Listes d'accès") || strings.Contains(access, `hx-get="/security/crowdsec/status"`) {
-		t.Error("la page Accès réseau n'est pas distincte de la protection CrowdSec")
+	// Les anciennes adresses renvoient vers les sections de la page Sécurité.
+	for path, to := range map[string]string{"/security/access": "/security/protection#listes", "/security/proxies": "/security/protection#proxies"} {
+		if resp, _ := e.do("GET", path, nil); resp.StatusCode != 303 || resp.Header.Get("Location") != to {
+			t.Errorf("%s : %d %q", path, resp.StatusCode, resp.Header.Get("Location"))
+		}
 	}
 	e.caddy.csStatus = caddyadmin.CrowdSecStatus{Healthy: true, Streaming: true, Interval: "10s", Decisions: 2}
 	_, frag := e.do("GET", "/security/crowdsec/status", nil)
@@ -2137,7 +2144,7 @@ func TestTrustedProxiesSetting(t *testing.T) {
 	ctx := context.Background()
 	e.post("/hosts", url.Values{"domain": {"wiki.example.com"}, "target": {"192.0.2.21:8080"}})
 
-	_, body := e.do("GET", "/security/proxies", nil)
+	_, body := e.do("GET", "/security/protection", nil)
 	if !strings.Contains(body, "Proxies de confiance") || len(e.caddy.global.TrustedProxies) != 0 {
 		t.Error("carte absente ou proxies publiés sans réglage")
 	}
@@ -2163,7 +2170,7 @@ func TestTrustedProxiesSetting(t *testing.T) {
 	if resp.StatusCode != 303 || strings.Join(e.caddy.global.TrustedProxies, " ") != "173.245.48.0/20 192.0.2.7" {
 		t.Fatalf("enregistrement : %d %v", resp.StatusCode, e.caddy.global.TrustedProxies)
 	}
-	_, body = e.do("GET", "/security/proxies", nil)
+	_, body = e.do("GET", "/security/protection", nil)
 	if !strings.Contains(body, "173.245.48.0/20\n192.0.2.7") {
 		t.Error("proxies non réaffichés")
 	}
@@ -2333,7 +2340,7 @@ func TestAccessLogSetting(t *testing.T) {
 
 	// Activé par défaut pour 30 jours, publié sans réglage.
 	_, body := e.do("GET", "/settings", nil)
-	if !strings.Contains(body, "Statistiques de trafic") || !strings.Contains(body, `name="accesslog" value="1" checked`) || !strings.Contains(body, `<option value="30" selected>30 jours</option>`) {
+	if !strings.Contains(body, "Journal d'accès") || !strings.Contains(body, `name="accesslog" value="1" checked`) || !strings.Contains(body, `<option value="30" selected>30 jours</option>`) {
 		t.Error("réglage absent, désactivé par défaut ou 30 jours non préselectionné")
 	}
 	if al := e.caddy.global.AccessLog; al == nil || al.KeepDays != 30 {
@@ -2405,8 +2412,8 @@ func TestStatsPageWithoutAndWithGoAccess(t *testing.T) {
 	if !strings.Contains(body, "Le journal d'accès est désactivé") || !strings.Contains(body, `action="/stats/journal"`) || !strings.Contains(body, `href="/settings"`) || strings.Contains(body, "198.51.100.7") || strings.Contains(body, "Dernières requêtes") {
 		t.Errorf("journal désactivé : %s", body)
 	}
-	if _, b := e.do("GET", "/hosts", nil); !strings.Contains(b, "Statistiques</span>") {
-		t.Error("entrée « Statistiques » absente du menu")
+	if _, b := e.do("GET", "/hosts", nil); !strings.Contains(b, "Trafic</span>") {
+		t.Error("entrée « Trafic » absente du menu")
 	}
 
 	// Activé, sans GoAccess : résumé, dernières requêtes (la plus récente d'abord), invitation à l'installer.
@@ -2771,7 +2778,7 @@ func TestHostListShowsAccessAndSecurityTags(t *testing.T) {
 	e.store.AddHostFull(ctx, store.Host{Domain: "redir.example.com", Kind: "redirect", Target: "https://example.org", Code: 301, AccessListID: listID})
 
 	_, body := e.do("GET", "/hosts", nil)
-	rows := strings.Split(body, `<tr id="host-`)
+	rows := strings.Split(body, ` id="host-`)
 	var plain, full string
 	for _, r := range rows {
 		switch {
@@ -2784,7 +2791,11 @@ func TestHostListShowsAccessAndSecurityTags(t *testing.T) {
 	if strings.Contains(plain, `class="pill sm`) {
 		t.Errorf("un hôte sans option ne doit montrer aucune pastille : %s", plain)
 	}
-	for _, want := range []string{"Liste d&#39;accès : Bureau", "WAF", "HSTS", "HTTP seulement", "Certificat auto-signé"} {
+	// La liste d'accès a sa propre colonne : pas de pastille en double.
+	if !strings.Contains(full, "Bureau") || strings.Contains(full, "Liste d&#39;accès : Bureau") {
+		t.Errorf("la liste d'accès se lit dans la colonne Accès : %s", full)
+	}
+	for _, want := range []string{"WAF", "HSTS", "HTTP seulement", "Certificat auto-signé"} {
 		if !strings.Contains(full, want) {
 			t.Errorf("pastille %q absente : %s", want, full)
 		}
@@ -2797,7 +2808,191 @@ func TestHostListShowsAccessAndSecurityTags(t *testing.T) {
 		t.Error("pas de pastilles sur les redirections")
 	}
 	_, en := e.do("GET", "/hosts", nil, "Accept-Language", "en")
-	if !strings.Contains(en, "Access list: Bureau") || !strings.Contains(en, "HTTP only") || !strings.Contains(en, "Self-signed certificate") {
+	if !strings.Contains(en, "HTTP only") || !strings.Contains(en, "Self-signed certificate") {
 		t.Errorf("traduction anglaise absente : %s", en)
+	}
+}
+
+func TestDecisionsPageIsReadOnlyAndNeedsCrowdSec(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	if resp, _ := e.do("GET", "/security/decisions", nil); resp.StatusCode != 303 || resp.Header.Get("Location") != "/security/protection" {
+		t.Errorf("sans CrowdSec : %d %q", resp.StatusCode, resp.Header.Get("Location"))
+	}
+	lapi := fakeLAPI(t, "cle-fictive")
+	e.srv.cfg.CrowdSecClient = lapi.Client()
+	e.post("/security/crowdsec", url.Values{"url": {lapi.URL}, "key": {"cle-fictive"}})
+	_, body := e.do("GET", "/security/decisions", nil)
+	for _, want := range []string{"Adresses bloquées", "192.0.2.99", "crowdsecurity/http-probing", "198.51.100.0/24", "1 j 23 h", "3 h 41", "2 décisions actives", "lecture seule"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("page des adresses bloquées sans %q : %s", want, body)
+		}
+	}
+	for _, bad := range []string{"Débannir", "Bannir", "hx-post", `action="/security`, "cle-fictive"} {
+		if strings.Contains(body, bad) {
+			t.Errorf("la page est en lecture seule, elle contient %q", bad)
+		}
+	}
+	// La page de protection y renvoie depuis la case « Décisions actives ».
+	e.caddy.csStatus = caddyadmin.CrowdSecStatus{Healthy: true, Streaming: true, Interval: "10s", Decisions: 2}
+	if _, frag := e.do("GET", "/security/crowdsec/status", nil); !strings.Contains(frag, `href="/security/decisions"`) {
+		t.Error("lien vers la liste absent de la case Décisions actives")
+	}
+	if _, en := e.do("GET", "/security/decisions", nil, "Accept-Language", "en"); !strings.Contains(en, "Blocked addresses") || !strings.Contains(en, "read only") {
+		t.Errorf("traduction anglaise absente : %s", en)
+	}
+}
+
+func TestHostsHomeFiltersCountsAndCertificateColumn(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	ctx := context.Background()
+	e.store.AddHostFull(ctx, store.Host{Domain: "wiki.example.com", Target: "http://192.0.2.1"})
+	e.store.AddHostFull(ctx, store.Host{Domain: "old.example.com", Kind: "redirect", Target: "https://example.org", Code: 301})
+	e.store.AddHostFull(ctx, store.Host{Domain: "gone.example.com", Kind: "404"})
+	offID, _ := e.store.AddHostFull(ctx, store.Host{Domain: "off.example.com", Target: "http://192.0.2.2"})
+	e.store.SetHostDisabled(ctx, offID, true)
+
+	_, all := e.do("GET", "/", nil)
+	for _, want := range []string{"wiki.example.com", "old.example.com", "gone.example.com", "off.example.com", `class="chip on" href="/"`, `href="/hosts"`, `href="/redirections"`, `href="/erreurs-404"`, `id="watch-filter"`} {
+		if !strings.Contains(all, want) {
+			t.Errorf("accueil sans %q", want)
+		}
+	}
+	// Compteurs des types : 4 hôtes, 2 services, 1 redirection, 1 page 404 (la recherche ne les change pas).
+	for _, want := range []string{`Tous <span class="n">4</span>`, `Services <span class="n">2</span>`, `Redirections <span class="n">1</span>`, `Pages 404 <span class="n">1</span>`} {
+		if !strings.Contains(all, want) {
+			t.Errorf("compteur absent : %q", want)
+		}
+	}
+	_, q := e.do("GET", "/?q=wiki", nil)
+	if strings.Contains(q, "gone.example.com") || !strings.Contains(q, `Tous <span class="n">4</span>`) {
+		t.Error("la recherche doit filtrer la liste sans changer les compteurs")
+	}
+	// Un hôte désactivé n'a pas de certificat à montrer.
+	if !strings.Contains(all, `<span class="dot" title="Désactivé">`) {
+		t.Error("point gris des hôtes désactivés absent")
+	}
+	// Un certificat lu sur le disque s'affiche dans la colonne HTTPS.
+	e.srv.cfg.CertDir = t.TempDir()
+	writeFakeCert(t, e.srv.cfg.CertDir, "wiki.example.com", e.srv.cfg.Now(), 62*24*time.Hour)
+	if _, withCert := e.do("GET", "/", nil); !strings.Contains(withCert, "61 j") {
+		t.Errorf("colonne HTTPS sans la durée restante : %s", withCert)
+	}
+}
+
+func TestTrafficPageShowsRequestsPerHost(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	file := filepath.Join(t.TempDir(), "access.log")
+	e.srv.cfg.AccessLogFile = file
+	line := func(ts int, host string, status int) string {
+		return fmt.Sprintf(`{"ts":%d,"status":%d,"request":{"client_ip":"192.0.2.10","host":%q,"method":"GET","uri":"/"}}`, ts, status, host)
+	}
+	os.WriteFile(file, []byte(line(1793743000, "wiki.example.com", 200)+"\n"+line(1793743001, "wiki.example.com", 200)+"\n"+line(1793743002, "wiki.example.com", 404)+"\n"+line(1793743003, "blog.example.com", 502)+"\n"), 0o600)
+	_, body := e.do("GET", "/stats", nil)
+	for _, want := range []string{"<h1>Trafic</h1>", "Par hôte", "wiki.example.com", "blog.example.com", `data-rfilter="err"`, `data-class="warn"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("page Trafic sans %q", want)
+		}
+	}
+	// wiki : 3 requêtes dont 1 erreur, en tête ; blog : 1 requête, 1 erreur.
+	i, j := strings.Index(body, "<b>wiki.example.com</b>"), strings.Index(body, "<b>blog.example.com</b>")
+	if i < 0 || j < 0 || i > j {
+		t.Error("l'hôte le plus sollicité doit venir en premier")
+	}
+}
+
+// writeFakeCert dépose dans dir un certificat fictif qui expire dans « left », comme Caddy le range.
+func writeFakeCert(t *testing.T, dir, name string, now time.Time, left time.Duration) {
+	t.Helper()
+	d := filepath.Join(dir, "acme-v02.api.letsencrypt.org-directory", name)
+	if err := os.MkdirAll(d, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	key, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	tpl := &x509.Certificate{SerialNumber: big.NewInt(1), NotBefore: now.Add(-100 * 24 * time.Hour), NotAfter: now.Add(left)}
+	der, _ := x509.CreateCertificate(rand.Reader, tpl, tpl, &key.PublicKey, key)
+	os.WriteFile(filepath.Join(d, name+".crt"), pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), 0o644)
+}
+
+func TestManyAlertsAreFoldedAfterTheFirstFour(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	for i := 1; i <= 6; i++ {
+		e.post("/hosts", url.Values{"domain": {fmt.Sprintf("h%d.example.com", i)}, "target": {fmt.Sprintf("192.0.2.%d:8080", i)}})
+	}
+	e.srv.cfg.CheckTarget = func(ctx context.Context, target string, _ bool) checks.Result {
+		return checks.Result{Status: checks.Error}
+	}
+	_, frag := e.do("GET", "/dashboard/online", nil)
+	if strings.Count(frag, `class="alert"`) != 6 || !strings.Contains(frag, `class="alerts-more"`) || !strings.Contains(frag, "2 autres alertes") {
+		t.Errorf("les alertes en plus des quatre premières doivent se déplier : %s", frag)
+	}
+	if i, j := strings.Index(frag, "h4.example.com"), strings.Index(frag, `class="alerts-more"`); i < 0 || j < 0 || i > j {
+		t.Error("les quatre premières alertes doivent rester visibles")
+	}
+	_, en := e.do("GET", "/dashboard/online", nil, "Accept-Language", "en")
+	if !strings.Contains(en, "2 other alerts") {
+		t.Errorf("traduction anglaise absente : %s", en)
+	}
+}
+
+func TestHostPageShowsItsRequestsAndHelpsWhenTheServiceIsDown(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	id := e.addHost("wiki.example.com", "http://192.0.2.21:8080")
+	file := filepath.Join(t.TempDir(), "access.log")
+	e.srv.cfg.AccessLogFile = file
+	line := func(ts int, host, uri string, status int) string {
+		return fmt.Sprintf(`{"ts":%d,"status":%d,"request":{"client_ip":"192.0.2.10","host":%q,"method":"GET","uri":%q}}`, ts, status, host, uri)
+	}
+	os.WriteFile(file, []byte(line(1793743000, "wiki.example.com", "/doku.php", 200)+"\n"+line(1793743001, "autre.example.com", "/pas-pour-wiki", 200)+"\n"+line(1793743002, "wiki.example.com", "/absente", 404)+"\n"), 0o600)
+
+	_, body := e.do("GET", "/hosts/"+itoa(id)+"/edit", nil)
+	if !strings.Contains(body, "/doku.php") || !strings.Contains(body, "/absente") || strings.Contains(body, "/pas-pour-wiki") {
+		t.Errorf("la page doit montrer les requêtes de son hôte, et seulement les siennes : %s", body)
+	}
+	e.srv.cfg.CheckTarget = func(ctx context.Context, target string, _ bool) checks.Result {
+		return checks.Result{Status: checks.Error, Message: "Connexion refusée."}
+	}
+	_, cell := e.do("GET", "/hosts/"+itoa(id)+"/status?cell=1", nil)
+	for _, want := range []string{"Cible injoignable", "Connexion refusée.", `id="host-note" hx-swap-oob="innerHTML"`, "Relancer la vérification", `hx-target="#cell-response"`} {
+		if !strings.Contains(cell, want) {
+			t.Errorf("la case réponse sans %q : %s", want, cell)
+		}
+	}
+	e.srv.cfg.CheckTarget = func(ctx context.Context, target string, _ bool) checks.Result {
+		return checks.Result{Status: checks.OK}
+	}
+	if _, ok := e.do("GET", "/hosts/"+itoa(id)+"/status?cell=1", nil); strings.Contains(ok, "Relancer la vérification") {
+		t.Error("pas de bouton quand le service répond")
+	}
+	// Hôte désactivé : un mot d'explication, pas de vérification du service.
+	e.post("/hosts/"+itoa(id)+"/toggle", nil)
+	_, off := e.do("GET", "/hosts/"+itoa(id)+"/edit", nil)
+	if !strings.Contains(off, "Cet hôte est désactivé") || strings.Contains(off, `id="cell-response"`) || strings.Contains(off, "status?pill=1") {
+		t.Errorf("hôte désactivé : %s", off)
+	}
+}
+
+func TestEnglishHostsHomeHasNoMixedLanguage(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	e.addHost("wiki.example.com", "http://192.0.2.21:8080")
+	_, en := e.do("GET", "/", nil, "Accept-Language", "en")
+	for _, want := range []string{`placeholder="Domain, target…"`, "Needs attention", "404 pages", "Hosts"} {
+		if !strings.Contains(en, want) {
+			t.Errorf("accueil anglais sans %q", want)
+		}
+	}
+	if strings.Contains(en, "cible") {
+		t.Error("du français est resté mélangé à l'anglais (« cible »)")
+	}
+	// Page d'un hôte : la case Protection et la bande d'état sont traduites.
+	hosts, _ := e.srv.cfg.Store.ListHosts(context.Background())
+	_, edit := e.do("GET", "/hosts/"+itoa(hosts[0].ID)+"/edit", nil, "Accept-Language", "en")
+	if !strings.Contains(edit, ">None<") || strings.Contains(edit, ">Aucune<") {
+		t.Errorf("la case Protection doit être traduite : %s", edit)
 	}
 }

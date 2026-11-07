@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -55,8 +56,16 @@ type reqView struct {
 
 // reqSummary résume les requêtes lues dans la fin du journal.
 type reqSummary struct {
-	Total, Visitors, Errors int    // requêtes, adresses distinctes, réponses 4xx et 5xx
-	Since                   string // date de la plus ancienne requête lue
+	Total, Visitors, Errors int           // requêtes, adresses distinctes, réponses 4xx et 5xx
+	Since                   string        // date de la plus ancienne requête lue
+	Hosts                   []hostTraffic // requêtes par hôte, les plus sollicités d'abord
+}
+
+// hostTraffic : les requêtes d'un hôte dans l'échantillon lu ; Pct est sa part du plus sollicité (barre).
+type hostTraffic struct {
+	Host           string
+	Requests, Errs int
+	Pct            int
 }
 
 // readRequests lit la fin du journal d'accès JSON : les show dernières requêtes (la plus récente d'abord)
@@ -84,6 +93,7 @@ func readRequests(path string, show, sample int) ([]reqView, reqSummary) {
 	}
 	var out []reqView
 	visitors := map[string]bool{}
+	perHost := map[string]*hostTraffic{}
 	var oldest int64
 	for i := len(lines) - 1; i >= 0 && sum.Total < sample; i-- {
 		var e struct {
@@ -114,6 +124,17 @@ func readRequests(path string, show, sample int) ([]reqView, reqSummary) {
 		if e.Status >= 400 {
 			sum.Errors++
 		}
+		if h := e.Request.Host; h != "" {
+			ht := perHost[h]
+			if ht == nil {
+				ht = &hostTraffic{Host: h}
+				perHost[h] = ht
+			}
+			ht.Requests++
+			if e.Status >= 400 {
+				ht.Errs++
+			}
+		}
 		if len(out) < show {
 			out = append(out, reqView{
 				Time: time.Unix(int64(e.TS), 0).Format("02/01 15:04:05"), IP: e.Request.ClientIP, Host: e.Request.Host,
@@ -122,6 +143,21 @@ func readRequests(path string, show, sample int) ([]reqView, reqSummary) {
 		}
 	}
 	sum.Visitors = len(visitors)
+	for _, ht := range perHost {
+		sum.Hosts = append(sum.Hosts, *ht)
+	}
+	sort.Slice(sum.Hosts, func(i, j int) bool {
+		if sum.Hosts[i].Requests != sum.Hosts[j].Requests {
+			return sum.Hosts[i].Requests > sum.Hosts[j].Requests
+		}
+		return sum.Hosts[i].Host < sum.Hosts[j].Host
+	})
+	if len(sum.Hosts) > 10 {
+		sum.Hosts = sum.Hosts[:10]
+	}
+	for i := range sum.Hosts {
+		sum.Hosts[i].Pct = max(sum.Hosts[i].Requests*100/sum.Hosts[0].Requests, 1)
+	}
 	if oldest > 0 {
 		sum.Since = time.Unix(oldest, 0).Format("02/01 15:04")
 	}
@@ -183,7 +219,7 @@ func (s *Server) goAccessReportURL(ctx context.Context, host string) string {
 }
 
 func (s *Server) statsGet(w http.ResponseWriter, r *http.Request) {
-	p := s.authedPage(r, "Statistiques", "stats")
+	p := s.authedPage(r, "Trafic", "stats")
 	s.statsPage(r, &p)
 	s.render(w, "stats", p)
 }
@@ -229,7 +265,7 @@ func (s *Server) statsJournal(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.cfg.AccessLogFile != "" {
 		if err := s.saveAccessLog(ctx, true, days); err != nil {
-			p := s.authedPage(r, "Statistiques", "stats")
+			p := s.authedPage(r, "Trafic", "stats")
 			s.statsPage(r, &p)
 			p.Error = explainSettingError(err)
 			w.WriteHeader(http.StatusUnprocessableEntity)

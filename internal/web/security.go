@@ -53,9 +53,15 @@ func (s *Server) securityPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/security/protection", http.StatusSeeOther)
 }
 
-func (s *Server) crowdSecPage(w http.ResponseWriter, r *http.Request) {
-	p := s.authedPage(r, "Protection CrowdSec", "security-crowdsec")
-	p.CS = s.crowdSecView(r.Context(), pageHost(r))
+// securityData réunit la page Sécurité : protection CrowdSec, listes d'accès, proxies de confiance.
+func (s *Server) securityData(r *http.Request) page {
+	p := s.authedPage(r, "Sécurité", "security-crowdsec")
+	ctx := r.Context()
+	p.CS = s.crowdSecView(ctx, pageHost(r))
+	p.Lists = s.listViews(ctx)
+	if proxies, err := s.trustedProxies(ctx); err == nil {
+		p.ProxiesText = strings.Join(proxies, "\n")
+	}
 	q := r.URL.Query()
 	switch {
 	case q.Get("csconnected") != "":
@@ -66,28 +72,30 @@ func (s *Server) crowdSecPage(w http.ResponseWriter, r *http.Request) {
 		p.Flash = "CrowdSec est désactivé : Caddy ne bloque plus rien de sa part."
 	case q.Get("csremoved") != "":
 		p.Flash = "La connexion CrowdSec a été retirée de Gatewyn."
-	}
-	s.render(w, "security", p)
-}
-
-func (s *Server) accessPage(w http.ResponseWriter, r *http.Request) {
-	p := s.authedPage(r, "Accès réseau", "security-access")
-	p.Lists = s.listViews(r.Context())
-	q := r.URL.Query()
-	switch {
 	case q.Get("added") != "":
 		p.Flash = fmt.Sprintf("La liste « %s » est créée.", q.Get("added"))
 	case q.Get("changed") != "":
 		p.Flash = fmt.Sprintf("La liste « %s » est mise à jour.", q.Get("changed"))
 	case q.Get("deleted") != "":
 		p.Flash = fmt.Sprintf("La liste « %s » est supprimée.", q.Get("deleted"))
+	case q.Get("saved") != "":
+		p.Flash = "Les proxies de confiance sont enregistrés."
 	}
-	s.render(w, "access", p)
+	return p
+}
+
+func (s *Server) crowdSecPage(w http.ResponseWriter, r *http.Request) {
+	s.render(w, "security", s.securityData(r))
+}
+
+// accessPage et proxiesPage : ces réglages se trouvent maintenant sur la page Sécurité.
+func (s *Server) accessPage(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/security/protection#listes", http.StatusSeeOther)
 }
 
 func (s *Server) listFormPage(r *http.Request, old *store.AccessList) page {
 	p := s.authedPage(r, "Nouvelle liste d'accès", "security-access")
-	p.Heading, p.Action, p.Submit, p.ListPath = "Nouvelle liste d'accès", "/security/lists", "Créer la liste", "/security/access"
+	p.Heading, p.Action, p.Submit, p.ListPath = "Nouvelle liste d'accès", "/security/lists", "Créer la liste", "/security/protection#listes"
 	if old != nil {
 		p.Title, p.Editing, p.EditID = "Modifier "+old.Name, true, old.ID
 		p.Heading, p.Action, p.Submit = "Modifier « "+old.Name+" »", "/security/lists/"+strconv.FormatInt(old.ID, 10), "Enregistrer"
@@ -185,7 +193,7 @@ func (s *Server) saveList(w http.ResponseWriter, r *http.Request, old *store.Acc
 		key, action = "changed", "accesslist.update"
 	}
 	s.audit(r.Context(), action, p.Name)
-	http.Redirect(w, r, "/security/access?"+key+"="+template.URLQueryEscaper(p.Name), http.StatusSeeOther)
+	http.Redirect(w, r, "/security/protection?"+key+"="+template.URLQueryEscaper(p.Name)+"#listes", http.StatusSeeOther)
 }
 
 func (s *Server) deleteList(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +212,7 @@ func (s *Server) deleteList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r.Context(), "accesslist.delete", l.Name)
-	w.Header().Set("HX-Redirect", "/security/access?deleted="+template.URLQueryEscaper(l.Name))
+	w.Header().Set("HX-Redirect", "/security/protection?deleted="+template.URLQueryEscaper(l.Name)+"#listes")
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -220,14 +228,7 @@ func (s *Server) trustedProxies(ctx context.Context) ([]string, error) {
 }
 
 func (s *Server) proxiesPage(w http.ResponseWriter, r *http.Request) {
-	p := s.authedPage(r, "Proxies de confiance", "security-proxies")
-	if proxies, err := s.trustedProxies(r.Context()); err == nil {
-		p.ProxiesText = strings.Join(proxies, "\n")
-	}
-	if r.URL.Query().Get("saved") != "" {
-		p.Flash = "Les proxies de confiance sont enregistrés."
-	}
-	s.render(w, "proxies", p)
+	http.Redirect(w, r, "/security/protection#proxies", http.StatusSeeOther)
 }
 
 // saveProxies enregistre les proxies de confiance ; une saisie vide les retire.
@@ -258,13 +259,13 @@ func (s *Server) saveProxies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(ctx, "proxies.update", strconv.Itoa(len(strings.Fields(value)))+" adresse(s)")
-	http.Redirect(w, r, "/security/proxies?saved=1", http.StatusSeeOther)
+	http.Redirect(w, r, "/security/protection?saved=1#proxies", http.StatusSeeOther)
 }
 
-// securityWithError réaffiche la page Proxies de confiance avec une erreur et la saisie en cours.
+// securityWithError réaffiche la page Sécurité avec une erreur et la saisie en cours.
 func (s *Server) securityWithError(w http.ResponseWriter, r *http.Request, msg, typed string) {
-	p := s.authedPage(r, "Proxies de confiance", "security-proxies")
+	p := s.securityData(r)
 	p.Error, p.ProxiesText = msg, typed
 	w.WriteHeader(http.StatusUnprocessableEntity)
-	s.render(w, "proxies", p)
+	s.render(w, "security", p)
 }

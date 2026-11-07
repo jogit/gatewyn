@@ -23,6 +23,15 @@ type certView struct {
 func (s *Server) certificatesPage(w http.ResponseWriter, r *http.Request) {
 	p := s.authedPage(r, "Certificats", "certificates")
 	p.DNS = s.dnsViews(r.Context())
+	q := r.URL.Query()
+	switch {
+	case q.Get("added") != "":
+		p.Flash = fmt.Sprintf("Le compte « %s » est créé.", q.Get("added"))
+	case q.Get("changed") != "":
+		p.Flash = fmt.Sprintf("Le compte « %s » est mis à jour.", q.Get("changed"))
+	case q.Get("deleted") != "":
+		p.Flash = fmt.Sprintf("Le compte « %s » est supprimé.", q.Get("deleted"))
+	}
 	p.CertsReadable = s.cfg.CertDir != ""
 	p.RootCert = s.rootCert() != nil
 	if p.CertsReadable {
