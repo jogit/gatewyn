@@ -88,7 +88,15 @@ type reverseProxy struct {
 	Handler       string     `json:"handler"`
 	Upstreams     []upstream `json:"upstreams"`
 	FlushInterval int        `json:"flush_interval,omitempty"` // -1 : les réponses partent au fur et à mesure
+	Headers       *rpHeaders `json:"headers,omitempty"`
 	Transport     *transport `json:"transport,omitempty"`
+}
+
+// rpHeaders : en-têtes envoyés à la cible (reverse_proxy.headers).
+type rpHeaders struct {
+	Request struct {
+		Set http.Header `json:"set"`
+	} `json:"request"`
 }
 
 type upstream struct {

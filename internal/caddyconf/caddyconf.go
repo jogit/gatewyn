@@ -341,6 +341,10 @@ func buildRoute(h Host) (Route, error) {
 		}
 		switch {
 		case tls:
+			// Caddy remplace le Host par l'adresse de la cible HTTPS : on garde celui du visiteur,
+			// comme pour une cible HTTP (sinon Crafty, entre autres, refuse les WebSockets : origine différente).
+			rp.Headers = &rpHeaders{}
+			rp.Headers.Request.Set = http.Header{"Host": {"{http.request.hostport}"}}
 			rp.Transport = &transport{Protocol: "http", TLS: &transportTLS{InsecureSkipVerify: h.TLSSkipVerify}}
 		case IsH2C(h.Target):
 			rp.Transport = &transport{Protocol: "http", Versions: []string{"h2c"}}

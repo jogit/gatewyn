@@ -424,6 +424,15 @@
             "dial": "192.0.2.6:8443"
            }
           ],
+          "headers": {
+           "request": {
+            "set": {
+             "Host": [
+              "{http.request.hostport}"
+             ]
+            }
+           }
+          },
           "transport": {
            "protocol": "http",
            "tls": {}
@@ -1050,6 +1059,15 @@
             "dial": "192.0.2.30:443"
            }
           ],
+          "headers": {
+           "request": {
+            "set": {
+             "Host": [
+              "{http.request.hostport}"
+             ]
+            }
+           }
+          },
           "transport": {
            "protocol": "http",
            "tls": {}
@@ -1089,6 +1107,15 @@
             "dial": "192.0.2.30:443"
            }
           ],
+          "headers": {
+           "request": {
+            "set": {
+             "Host": [
+              "{http.request.hostport}"
+             ]
+            }
+           }
+          },
           "transport": {
            "protocol": "http",
            "tls": {
@@ -2547,6 +2574,15 @@
         "dial": "192.0.2.6:8443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -2992,6 +3028,15 @@
         "dial": "192.0.2.6:8443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -3437,6 +3482,15 @@
         "dial": "192.0.2.6:8443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -3885,6 +3939,15 @@
         "dial": "192.0.2.6:8443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -4338,6 +4401,15 @@
         "dial": "192.0.2.6:8443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -4783,6 +4855,15 @@
         "dial": "192.0.2.6:8443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -7726,6 +7807,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -7757,6 +7847,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -7788,6 +7887,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -7822,6 +7930,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -7861,6 +7978,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -7892,6 +8018,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {}
@@ -7933,6 +8068,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {
@@ -7966,6 +8110,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {
@@ -7999,6 +8152,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {
@@ -8035,6 +8197,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {
@@ -8076,6 +8247,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {
@@ -8109,6 +8289,15 @@
         "dial": "192.0.2.30:443"
        }
       ],
+      "headers": {
+       "request": {
+        "set": {
+         "Host": [
+          "{http.request.hostport}"
+         ]
+        }
+       }
+      },
       "transport": {
        "protocol": "http",
        "tls": {

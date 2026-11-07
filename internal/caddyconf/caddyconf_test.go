@@ -656,6 +656,10 @@ func TestTLSSkipVerifyOnlyAffectsHTTPSTargets(t *testing.T) {
 	if n := strings.Count(string(raw), `"insecure_skip_verify":true`); n != 2 { // l'hôte et son chemin
 		t.Errorf("%d transports sans vérification, attendu 2 : %s", n, raw)
 	}
+	// Le Host du visiteur est gardé pour toute cible HTTPS (Caddy mettrait sinon celui de la cible).
+	if n := strings.Count(string(raw), `"headers":{"request":{"set":{"Host":["{http.request.hostport}"]}}}`); n != 3 { // hôte, chemin, hôte strict
+		t.Errorf("Host conservé : %d, attendu 3 : %s", n, raw)
+	}
 	if !strings.Contains(string(raw), `"tls":{}`) {
 		t.Errorf("l'hôte strict garde la vérification : %s", raw)
 	}

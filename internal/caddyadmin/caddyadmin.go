@@ -248,9 +248,9 @@ func parseHosts(raw []byte) ([]caddyconf.Host, error) {
 				Path []string `json:"path"`
 			} `json:"match"`
 			Handle []struct {
-				Handler    string      `json:"handler"`
-				StatusCode json.Number `json:"status_code"`
-				Headers    map[string][]string
+				Handler    string          `json:"handler"`
+				StatusCode json.Number     `json:"status_code"`
+				Headers    json.RawMessage // static_response : en-têtes de réponse (reverse_proxy : autre forme, ignorée)
 				Upstreams  []struct {
 					Dial string `json:"dial"`
 				} `json:"upstreams"`
@@ -298,9 +298,9 @@ func parseHosts(raw []byte) ([]caddyconf.Host, error) {
 					continue
 				}
 				hosts = append(hosts, caddyconf.Host{Domain: domain, Aliases: aliases, Target: scheme + "://" + h.Upstreams[0].Dial})
-			case h.Handler == "static_response" && len(h.Headers["Location"]) > 0:
+			case h.Handler == "static_response" && len(location(h.Headers)) > 0:
 				code, _ := h.StatusCode.Int64()
-				loc := h.Headers["Location"][0]
+				loc := location(h.Headers)[0]
 				keep := strings.HasSuffix(loc, keepPath)
 				hosts = append(hosts, caddyconf.Host{Domain: domain, Aliases: aliases, Kind: caddyconf.KindRedirect,
 					Target: strings.TrimSuffix(loc, keepPath), Code: int(code), PreservePath: keep})
@@ -313,4 +313,13 @@ func parseHosts(raw []byte) ([]caddyconf.Host, error) {
 		hosts[i].Locations = locations[hosts[i].Domain]
 	}
 	return hosts, nil
+}
+
+// location lit l'en-tête Location d'une réponse statique (les en-têtes d'un reverse_proxy n'ont pas cette forme).
+func location(raw json.RawMessage) []string {
+	var m map[string][]string
+	if json.Unmarshal(raw, &m) != nil {
+		return nil
+	}
+	return m["Location"]
 }

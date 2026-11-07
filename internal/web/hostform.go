@@ -467,8 +467,11 @@ func caddyfilePreview(f formInput, lists map[int64][]string) string {
 			if f.NoBuffering {
 				opts = append(opts, "flush_interval -1")
 			}
-			if _, tls, _ := caddyconf.ParseTarget(target); tls && f.TLSSkipVerify {
-				opts = append(opts, "transport http {\n      tls_insecure_skip_verify\n    }")
+			if _, tls, _ := caddyconf.ParseTarget(target); tls {
+				opts = append(opts, "header_up Host {hostport}") // Caddy mettrait sinon l'adresse de la cible
+				if f.TLSSkipVerify {
+					opts = append(opts, "transport http {\n      tls_insecure_skip_verify\n    }")
+				}
 			}
 			if len(opts) > 0 {
 				line += " {\n    " + strings.Join(opts, "\n    ") + "\n  }"

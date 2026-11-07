@@ -1033,7 +1033,7 @@ func TestCaddyfilePreview(t *testing.T) {
 		want string
 	}{
 		{formInput{Kind: "proxy", Domain: "wiki.example.com", Target: "http://192.0.2.21:8080"}, "wiki.example.com {\n  reverse_proxy 192.0.2.21:8080\n}"},
-		{formInput{Kind: "proxy", Domain: "nas.example.com", Target: "https://192.0.2.30:5001"}, "nas.example.com {\n  reverse_proxy https://192.0.2.30:5001\n}"},
+		{formInput{Kind: "proxy", Domain: "nas.example.com", Target: "https://192.0.2.30:5001"}, "nas.example.com {\n  reverse_proxy https://192.0.2.30:5001 {\n    header_up Host {hostport}\n  }\n}"},
 		{formInput{Kind: "redirect", Domain: "old.example.com", Target: "https://new.example.org", Code: 301, Preserve: true}, "old.example.com {\n  redir https://new.example.org{uri} 301\n}"},
 		{formInput{Kind: "redirect", Domain: "old.example.com", Target: "https://new.example.org/landing", Code: 302}, "old.example.com {\n  redir https://new.example.org/landing 302\n}"},
 		{formInput{Kind: "404", Domain: "gone.example.com"}, "gone.example.com {\n  respond \"404 Not Found\" 404\n}"},
