@@ -27,7 +27,7 @@ func plural(n int, one, many string) string {
 func (s *Server) hostStrip(ctx context.Context, h store.Host) hostStrip {
 	st := hostStrip{Domain: h.Domain}
 	now := s.cfg.Now()
-	switch c, ok := s.certsByName()[h.Domain]; {
+	switch c, ok := certFor(s.certsByName(), h.Domain); {
 	case h.Disabled:
 		st.CertTitle, st.CertSub = "—", "Hôte désactivé"
 	case h.HTTPOnly:

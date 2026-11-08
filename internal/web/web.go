@@ -531,22 +531,39 @@ func (s *Server) hostsList(w http.ResponseWriter, r *http.Request, kind string) 
 	s.render(w, "hosts", p)
 }
 
-// certsByName indexe les certificats lus sur le disque par nom couvert.
+// certsByName indexe les certificats lus sur le disque par nom couvert. Quand
+// plusieurs certificats couvrent le même nom (ancien certificat expiré resté sur
+// le disque après un changement de défi, par exemple), le plus tardif l'emporte.
 func (s *Server) certsByName() map[string]certs.Cert {
 	if s.cfg.CertDir == "" {
 		return nil
 	}
 	list, _ := certs.List(s.cfg.CertDir)
 	m := map[string]certs.Cert{}
+	add := func(name string, c certs.Cert) {
+		if old, ok := m[name]; !ok || c.Expires.After(old.Expires) {
+			m[name] = c
+		}
+	}
 	for _, c := range list {
-		m[c.Domain] = c
+		add(c.Domain, c)
 		for _, n := range c.Names {
-			if _, ok := m[n]; !ok {
-				m[n] = c
-			}
+			add(n, c)
 		}
 	}
 	return m
+}
+
+// certFor trouve le certificat qui sert un domaine : le sien, ou un certificat
+// générique (*.example.com) qui le couvre, en gardant le plus tardif des deux.
+func certFor(byName map[string]certs.Cert, domain string) (certs.Cert, bool) {
+	c, ok := byName[domain]
+	if i := strings.Index(domain, "."); i > 0 {
+		if w, wok := byName["*"+domain[i:]]; wok && (!ok || w.Expires.After(c.Expires)) {
+			c, ok = w, true
+		}
+	}
+	return c, ok
 }
 
 // certColumn : ce que la colonne HTTPS de la liste affiche pour un hôte.
@@ -557,7 +574,7 @@ func certColumn(h store.Host, byName map[string]certs.Cert, now time.Time) (text
 	case h.HTTPOnly, h.SelfSigned: // dit par la pastille sous le domaine
 		return "—", ""
 	}
-	if c, ok := byName[h.Domain]; ok {
+	if c, ok := certFor(byName, h.Domain); ok {
 		cl := expiryClass(now, c.Expires)
 		if cl == "ok" {
 			cl = ""
