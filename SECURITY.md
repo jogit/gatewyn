@@ -17,7 +17,7 @@ Only the latest release is supported. Gatewyn does not update itself: pull the n
 - The administration port (8088) is published on all addresses by the compose file: keep it on a private network (firewall), never on the Internet.
 - The first administrator account is created by whoever opens the interface first, so create it right after deploying. There are no default credentials.
 - Gatewyn has no access to the Docker socket, and its integrations (CrowdSec, statistics) are read-only.
-- The access log contains visitors' IP addresses. It is on by default for 30 days and can be turned off in Settings.
+- The access log contains visitors' IP addresses. It is on by default for 30 days and can be turned off in Settings. Requests are written only to that file, never to the container's own logs (stderr), so turning the log off or letting it expire removes the addresses.
 - Two-factor authentication is not available yet.
 
 Problems in Caddy, CrowdSec or GoAccess themselves should be reported to those projects.

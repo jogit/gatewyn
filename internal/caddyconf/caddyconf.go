@@ -107,6 +107,16 @@ func AccessLogJSON(a AccessLog) ([]byte, error) {
 	})
 }
 
+// DefaultLogJSON renvoie le journal principal de Caddy (stderr) réglé pour ne pas recevoir
+// les accès HTTP. Sans cela, chaque requête, avec l'adresse du visiteur, serait aussi écrite
+// dans les journaux du conteneur : Caddy envoie au journal principal tout ce qu'aucun
+// journal n'exclut, et seul le Caddyfile ajoute cette exclusion de lui-même.
+func DefaultLogJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Exclude []string `json:"exclude"`
+	}{Exclude: []string{"http.log.access." + AccessLogName}})
+}
+
 // CrowdSec configure le bouncer CrowdSec de Caddy (module caddy-crowdsec-bouncer).
 type CrowdSec struct {
 	URL string // API locale de CrowdSec, ex. http://crowdsec:8080

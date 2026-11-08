@@ -28,6 +28,9 @@ const crowdsecPath = "/config/apps/crowdsec"
 // accessLogPath : le journal d'accès de Gatewyn, à côté des journaux propres à Caddy.
 const accessLogPath = "/config/logging/logs/" + caddyconf.AccessLogName
 
+// defaultLogPath : le journal principal de Caddy (stderr), qui ne doit pas recevoir les accès.
+const defaultLogPath = "/config/logging/logs/default"
+
 const (
 	serverPath     = "/config/apps/http/servers/" + caddyconf.ServerName
 	httpServerPath = "/config/apps/http/servers/" + caddyconf.ServerName + "-http"
@@ -99,6 +102,13 @@ func (c *Client) ApplyAll(ctx context.Context, hosts []caddyconf.Host, g caddyco
 		if err := c.put(ctx, accessLogPath, logBody); err != nil {
 			return err
 		}
+		defBody, err := caddyconf.DefaultLogJSON()
+		if err != nil {
+			return err
+		}
+		if err := c.put(ctx, defaultLogPath, defBody); err != nil {
+			return err
+		}
 	}
 	// Les règles de certificat ensuite : le serveur peut en dépendre.
 	if err := c.put(ctx, tlsPath, tls); err != nil {
@@ -116,6 +126,9 @@ func (c *Client) ApplyAll(ctx context.Context, hosts []caddyconf.Host, g caddyco
 	}
 	if g.AccessLog == nil { // retiré après les serveurs qui y écrivaient
 		if err := c.remove(ctx, accessLogPath); err != nil {
+			return err
+		}
+		if err := c.remove(ctx, defaultLogPath); err != nil {
 			return err
 		}
 	}

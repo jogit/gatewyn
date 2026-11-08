@@ -904,6 +904,11 @@ func TestRealCaddyAccessLog(t *testing.T) {
 		}
 	}
 
+	// Les accès ne doivent pas non plus finir dans les journaux du conteneur (stderr).
+	if out, _ := exec.Command("docker", "logs", container).CombinedOutput(); strings.Contains(string(out), "/ping-journal") {
+		t.Errorf("l'accès est aussi écrit dans les journaux du conteneur :\n%s", out)
+	}
+
 	// Retiré : plus rien n'est écrit.
 	if err := c.ApplyAll(ctx, hosts, caddyconf.Global{}); err != nil {
 		t.Fatal(err)

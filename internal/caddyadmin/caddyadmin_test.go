@@ -55,9 +55,9 @@ func TestApplyReplacesWhenServerExists(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Règles de certificat puis serveur, chacun en PUT puis PATCH (409), puis retrait du serveur
-	// HTTP (aucun hôte en HTTP seulement), du journal d'accès et de CrowdSec (non demandés).
-	if !reflect.DeepEqual(methods, []string{http.MethodPut, http.MethodPatch, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodDelete, http.MethodDelete}) {
-		t.Errorf("méthodes = %v, attendu PUT puis PATCH pour chaque élément, puis DELETE ×3", methods)
+	// HTTP (aucun hôte en HTTP seulement), du journal d'accès, du journal principal qui l'exclut et de CrowdSec (non demandés).
+	if !reflect.DeepEqual(methods, []string{http.MethodPut, http.MethodPatch, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodDelete, http.MethodDelete, http.MethodDelete}) {
+		t.Errorf("méthodes = %v, attendu PUT puis PATCH pour chaque élément, puis DELETE ×4", methods)
 	}
 	if paths[0] != "/config/apps/tls/automation" || paths[2] != "/config/apps/http/servers/gatewyn" {
 		t.Errorf("chemins = %v", paths)
@@ -162,7 +162,7 @@ func TestApplyPublishesTheHTTPServerForHTTPOnlyHosts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"PUT /config/apps/tls/automation", "PUT /config/apps/http/servers/gatewyn", "PUT /config/apps/http/servers/gatewyn-http", "DELETE /config/logging/logs/gatewyn_access", "DELETE /config/apps/crowdsec"}
+	want := []string{"PUT /config/apps/tls/automation", "PUT /config/apps/http/servers/gatewyn", "PUT /config/apps/http/servers/gatewyn-http", "DELETE /config/logging/logs/gatewyn_access", "DELETE /config/logging/logs/default", "DELETE /config/apps/crowdsec"}
 	if !reflect.DeepEqual(calls, want) {
 		t.Errorf("appels = %v, attendu %v", calls, want)
 	}
@@ -244,7 +244,7 @@ func TestApplyAllPublishesTheAccessLogBeforeTheServersAndRemovesItAfter(t *testi
 	if err := New(srv.URL).ApplyAll(context.Background(), hosts, g); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"PUT /config/logging/logs/gatewyn_access", "PUT /config/apps/tls/automation", "PUT /config/apps/http/servers/gatewyn", "DELETE /config/apps/http/servers/gatewyn-http", "DELETE /config/apps/crowdsec"}
+	want := []string{"PUT /config/logging/logs/gatewyn_access", "PUT /config/logging/logs/default", "PUT /config/apps/tls/automation", "PUT /config/apps/http/servers/gatewyn", "DELETE /config/apps/http/servers/gatewyn-http", "DELETE /config/apps/crowdsec"}
 	if !reflect.DeepEqual(calls, want) {
 		t.Errorf("avec journal : %v, attendu %v", calls, want)
 	}
@@ -252,6 +252,9 @@ func TestApplyAllPublishesTheAccessLogBeforeTheServersAndRemovesItAfter(t *testi
 		if !strings.Contains(bodies["/config/logging/logs/gatewyn_access"], w) {
 			t.Errorf("journal sans %s : %s", w, bodies["/config/logging/logs/gatewyn_access"])
 		}
+	}
+	if bodies["/config/logging/logs/default"] != `{"exclude":["http.log.access.gatewyn_access"]}` {
+		t.Errorf("le journal principal reçoit encore les accès : %s", bodies["/config/logging/logs/default"])
 	}
 	if !strings.Contains(bodies["/config/apps/http/servers/gatewyn"], `"default_logger_name":"gatewyn_access"`) {
 		t.Errorf("le serveur n'écrit pas dans le journal : %s", bodies["/config/apps/http/servers/gatewyn"])
@@ -265,7 +268,7 @@ func TestApplyAllPublishesTheAccessLogBeforeTheServersAndRemovesItAfter(t *testi
 	if strings.Contains(bodies["/config/apps/http/servers/gatewyn"], "default_logger_name") {
 		t.Error("le serveur écrit encore dans le journal")
 	}
-	if calls[len(calls)-2] != "DELETE /config/logging/logs/gatewyn_access" {
+	if calls[len(calls)-3] != "DELETE /config/logging/logs/gatewyn_access" || calls[len(calls)-2] != "DELETE /config/logging/logs/default" {
 		t.Errorf("sans journal : %v", calls)
 	}
 }
