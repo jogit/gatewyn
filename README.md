@@ -4,6 +4,8 @@ English · [Français](README.fr.md)
 
 A simple web interface to publish services over HTTPS, on top of Caddy.
 
+Website and demo video: <https://jogit.github.io/gatewyn/>
+
 Status: released and in use. The image is published on GitHub Container Registry (`ghcr.io/jogit/gatewyn`, one tag per release, never `latest`). Working rules are in [AGENTS.md](AGENTS.md) and design decisions with their reasons in [docs/architecture.md](docs/architecture.md).
 
 ## Idea

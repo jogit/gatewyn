@@ -1,0 +1,11 @@
+name: Idea or feedback
+description: A suggestion, something missing, something that confused you
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to see?
+      description: Describe the situation first (what you are trying to do), then the idea.
+    validations:
+      required: true
