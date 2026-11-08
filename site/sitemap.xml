@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://jogit.github.io/gatewyn/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jogit.github.io/gatewyn/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://jogit.github.io/gatewyn/fr.html"/>
+  </url>
+  <url>
+    <loc>https://jogit.github.io/gatewyn/fr.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jogit.github.io/gatewyn/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://jogit.github.io/gatewyn/fr.html"/>
+  </url>
+</urlset>
