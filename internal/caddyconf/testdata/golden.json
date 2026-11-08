@@ -1384,6 +1384,7 @@
   "api_key": "cle-fictive",
   "api_url": "http://crowdsec:8080",
   "appsec_fail_open": true,
+  "appsec_max_body_bytes": 1048576,
   "appsec_url": "http://crowdsec:7422",
   "enable_streaming": true,
   "ticker_interval": "10s"

@@ -128,6 +128,9 @@ type CrowdSec struct {
 	AppSecFailOpen bool
 }
 
+// appSecMaxBodyBytes : taille du début de corps envoyée à AppSec (1 Mo).
+const appSecMaxBodyBytes = 1 << 20
+
 // CrowdSecJSON renvoie la configuration de l'application « crowdsec » de Caddy :
 // les décisions sont lues en flux et gardées en mémoire, mises à jour toutes les 10 s.
 func CrowdSecJSON(cs CrowdSec) ([]byte, error) {
@@ -140,6 +143,9 @@ func CrowdSecJSON(cs CrowdSec) ([]byte, error) {
 	if cs.AppSecURL != "" {
 		m["appsec_url"] = cs.AppSecURL
 		m["appsec_fail_open"] = cs.AppSecFailOpen
+		// Seul le début du corps est inspecté : AppSec refuse tout corps de plus de 10 Mo
+		// (envoi de vidéos bloqué) et le reste de l'envoi n'a pas à lui être transféré.
+		m["appsec_max_body_bytes"] = appSecMaxBodyBytes
 	}
 	return json.Marshal(m)
 }
