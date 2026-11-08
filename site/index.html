@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gatewyn · Publish a service over HTTPS</title>
+<meta name="description" content="A simple web interface to publish services over HTTPS, on top of Caddy. Two fields for a first service.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+:root{--bg:#fafafa;--ink:#18181b;--muted:#5f5f68;--card:#fff;--line:#e4e4e7;--brand:#c9f36a;--dark:#17181b;--ok:#15803d;--accent:#5b4ee0}
+@media(prefers-color-scheme:dark){:root{--bg:#101113;--ink:#f4f4f5;--muted:#a1a1aa;--card:#1a1b1e;--line:#2c2d32;--ok:#4ade80;--accent:#a5a0ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:960px;margin:0 auto;padding:0 16px 64px}
+nav{display:flex;align-items:center;gap:10px;padding:20px 0}
+nav b{font-size:18px}nav .sp{flex:1}
+nav a{color:var(--muted);text-decoration:none;font-size:14px}nav a:hover{color:var(--ink)}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--brand);display:grid;place-items:center}
+.mark svg{width:20px;height:20px}
+h1{font-size:clamp(32px,6vw,52px);line-height:1.1;margin:48px 0 16px;letter-spacing:-.02em}
+h1 em{font-style:normal;background:var(--brand);color:var(--dark);padding:0 .15em;border-radius:6px}
+.lead{font-size:19px;color:var(--muted);max-width:620px;margin:0 0 28px}
+.btn{display:inline-block;background:var(--dark);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;margin-right:8px}
+@media(prefers-color-scheme:dark){.btn{background:var(--brand);color:var(--dark)}}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.demo{margin:48px 0}
+.demo video{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.18);background:#f5f5f2}
+.cap{text-align:center;font-size:13px;color:var(--muted);margin:12px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:32px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+.card h3{margin:0 0 6px;font-size:16px}.card p{margin:0;color:var(--muted);font-size:15px}
+h2{font-size:26px;margin:56px 0 8px}
+pre{background:var(--dark);color:#d9f99d;padding:16px;border-radius:10px;overflow-x:auto;font-size:14px;white-space:pre-wrap;word-break:break-word}
+footer{margin-top:64px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:20px}
+footer a{color:var(--accent)}
+</style></head>
+<body><main>
+<nav><span class="mark"><svg viewBox="0 0 32 32"><path d="M5 28V14a11 11 0 0 1 22 0v14" fill="none" stroke="#17181b" stroke-width="3.2" stroke-linecap="round"/><path d="M12 28V15a4 4 0 0 1 8 0v13" fill="none" stroke="#17181b" stroke-width="3.2" stroke-linecap="round"/></svg></span><b>Gatewyn</b><span class="sp"></span><a href="https://github.com/jogit/gatewyn">GitHub</a><a href="https://github.com/jogit/gatewyn/blob/main/docs/architecture.md">Design</a></nav>
+
+<h1>Publish a service over HTTPS in <em>five minutes</em>.</h1>
+<p class="lead">A simple web interface on top of Caddy. Two fields for a first service, checks before anything goes live, and error messages that tell you what to do.</p>
+<a class="btn" href="#install">Install</a><a class="btn alt" href="https://github.com/jogit/gatewyn">View on GitHub</a>
+
+<div class="demo"><video src="demo.webm" poster="demo-poster.png" autoplay muted loop playsinline controls preload="metadata" aria-label="Screen recording: open New host, type a domain and a target, create the host, and it appears in the list with a green status."></video>
+<p class="cap">The real interface, recorded on a throwaway instance with fictional data (example.com, 192.0.2.x).</p></div>
+
+<div class="grid">
+<div class="card"><h3>Two fields</h3><p>Domain and target. Everything else is optional and grouped below.</p></div>
+<div class="card"><h3>Plain-language errors</h3><p>“The domain does not point to your IP”, never a raw ACME code.</p></div>
+<div class="card"><h3>Optional protection</h3><p>CrowdSec and its AppSec WAF, access lists by IP, traffic statistics.</p></div>
+<div class="card"><h3>One image</h3><p>Gatewyn and Caddy, SQLite, no other dependency. No Docker socket.</p></div>
+<div class="card"><h3>English and French</h3><p>Sober interface, usable on a phone.</p></div>
+<div class="card"><h3>No phone-home</h3><p>No automatic update, no outside call. Updates are your decision.</p></div>
+</div>
+
+<h2 id="install">Install</h2>
+<pre>docker compose -f deploy/compose.yml up -d</pre>
+<p>Open <code>http://&lt;server address&gt;:8088</code> and create the administrator account right away. Never expose port 8088 to the Internet.</p>
+
+<footer>Gatewyn is open source under the MIT license. <a href="https://github.com/jogit/gatewyn">Source code</a></footer>
+</main></body></html>
