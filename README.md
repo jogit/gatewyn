@@ -43,7 +43,7 @@ The interface explains each step (Protection and Statistics pages). With the `cr
 
 ## Update
 
-Gatewyn never updates itself and does not look for new versions. To update, change the image tag in your compose file (see the [releases](https://github.com/jogit/gatewyn/releases)) and redeploy. Your data stays in the volumes, and the database is copied before each migration. To roll back, redeploy the previous tag.
+Gatewyn never updates itself and does not look for new versions. To update, change the image tag in your compose file (see the [releases](https://github.com/jogit/gatewyn/releases)) and redeploy. Your data stays in the volumes, and the database is copied before each migration. To roll back, redeploy the previous tag. Settings keeps a daily backup copy (at the hour you choose, server time: set `TZ` in the compose file; 7 days by default, on the same disk) and offers a download (database and encryption key, keep it private) and a restore. Back the data volume up elsewhere with your own tool.
 
 ## Develop
 

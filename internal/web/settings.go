@@ -61,6 +61,12 @@ func (s *Server) settingsPage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("saved") != "" {
 		p.Flash = "Les réglages sont enregistrés."
 	}
+	if r.URL.Query().Get("backupnow") != "" {
+		p.Flash = "La sauvegarde est faite."
+	}
+	if r.URL.Query().Get("backup") != "" {
+		p.Flash = "Les réglages de sauvegarde sont enregistrés."
+	}
 	if r.URL.Query().Get("password") != "" {
 		p.Flash = "Le mot de passe est modifié. Les autres sessions sont fermées."
 	}
@@ -71,6 +77,7 @@ func (s *Server) settingsPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) settingsData(r *http.Request) page {
 	p := s.authedPage(r, "Réglages", "settings")
 	p.CanChangePw = !s.cfg.NoLogin
+	s.fillBackup(r.Context(), &p)
 	p.CrowdSecUIURL = s.crowdSecWebUIURL(r.Context(), defaultCrowdSecURL, pageHost(r))
 	p.GoAccessReport, p.GoAccessTarget = s.goAccessReportURL(r.Context(), pageHost(r)), s.cfg.GoAccessURL
 	p.UILanguage = s.languageSetting(r.Context())
@@ -155,6 +162,7 @@ func (s *Server) saveSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	p.GoAccessReport, p.GoAccessTarget = strings.TrimSpace(r.PostFormValue("goaccess_report_url")), s.cfg.GoAccessURL
 	s.fillAccessLog(r.Context(), &p)
+	s.fillBackup(r.Context(), &p)
 	if p.AccessLogAvail {
 		p.AccessLogOn = r.PostFormValue("accesslog") == "1"
 		if d, err := strconv.Atoi(r.PostFormValue("accesslog_days")); err == nil && slices.Contains(accessLogChoices, d) {

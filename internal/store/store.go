@@ -184,6 +184,13 @@ func Open(path string) (*Store, error) {
 	return s, nil
 }
 
+// CopyTo écrit une copie cohérente de la base dans path (fichier qui ne doit pas exister),
+// sans arrêter l'écriture en cours.
+func (s *Store) CopyTo(ctx context.Context, path string) error {
+	_, err := s.db.ExecContext(ctx, "VACUUM INTO ?", path)
+	return err
+}
+
 // Close ferme la base.
 func (s *Store) Close() error { return s.db.Close() }
 

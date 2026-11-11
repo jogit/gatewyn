@@ -77,3 +77,9 @@ document.querySelectorAll("[data-filter-rows]").forEach(function (input) {
     if (select.value) document.documentElement.dataset.theme = select.value; else delete document.documentElement.dataset.theme;
   });
 })();
+
+// Un formulaire marqué data-confirm demande confirmation avant d'être envoyé.
+document.addEventListener("submit", function (e) {
+  var msg = e.target.getAttribute && e.target.getAttribute("data-confirm");
+  if (msg && !window.confirm(msg)) e.preventDefault();
+});

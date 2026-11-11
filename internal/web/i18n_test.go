@@ -130,7 +130,7 @@ var goNotUI = map[string]string{
 var verbs = strings.NewReplacer("%s", "example", "%d", "3", "%q", `"example"`, "%w", "example", "%v", "example")
 
 func TestEnglishCoversGoMessages(t *testing.T) {
-	dirs := []string{".", "../checks", "../caddyconf", "../dnsprov", "../auth", "../caddyadmin", "../secrets", "../crowdsec"}
+	dirs := []string{".", "../checks", "../caddyconf", "../dnsprov", "../auth", "../caddyadmin", "../secrets", "../crowdsec", "../backup"}
 	var missing []string
 	fset := token.NewFileSet()
 	for _, dir := range dirs {

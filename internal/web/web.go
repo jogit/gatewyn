@@ -75,7 +75,11 @@ type Config struct {
 	CrowdSecKeyFile string
 	// CrowdSecMetricsURL remplace l'adresse des métriques de CrowdSec (déduite de son API locale si vide).
 	CrowdSecMetricsURL string
-	Logger             *slog.Logger
+	// DBPath et KeyFile : fichiers de la base et de la clé, pour la sauvegarde (vides : sauvegarde indisponible).
+	DBPath, KeyFile string
+	// Restart arrête Gatewyn proprement pour qu'il redémarre (installation d'une sauvegarde restaurée).
+	Restart func()
+	Logger  *slog.Logger
 	// Remplaçables dans les tests.
 	CheckDNS    func(ctx context.Context, domain string) checks.Result
 	CheckTarget func(ctx context.Context, target string, skipVerify bool) checks.Result
@@ -149,6 +153,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /settings", s.auth(s.settingsPage))
 	mux.HandleFunc("POST /settings", s.auth(s.saveSettings))
 	mux.HandleFunc("POST /settings/password", s.auth(s.changePassword))
+	mux.HandleFunc("POST /settings/backup", s.auth(s.backupNow))
+	mux.HandleFunc("POST /settings/backup/auto", s.auth(s.saveBackupSettings))
+	mux.HandleFunc("GET /settings/backup/{name}", s.auth(s.downloadCopy))
+	mux.HandleFunc("POST /settings/restore", s.auth(s.restoreBackup))
 	mux.HandleFunc("GET /certificates", s.auth(s.certificatesPage))
 	mux.HandleFunc("GET /certificates/root.crt", s.auth(s.downloadRootCert))
 	mux.HandleFunc("GET /certificates/dns", s.auth(s.dnsAccountsPage))
@@ -795,6 +803,16 @@ type page struct {
 	Authed, CaddyOK  bool
 	Flash, Error     string
 	PwError          string // erreur du formulaire de changement de mot de passe
+	BackupAvail      bool   // réglages : sauvegarde et restauration possibles
+	BackupOn         bool   // réglages : copies automatiques actives
+	BackupDays       int    // réglages : durée de conservation des copies
+	BackupHour       int    // réglages : heure de la copie automatique
+	BackupHours      []int
+	BackupChoices    []int
+	BackupCopies     []copyView // les plus récentes
+	BackupMore       []copyView // les plus anciennes, repliées
+	BackupMoreLabel  string
+	BackupError      string // erreur de la restauration
 	CanChangePw      bool
 	Hosts            []hostView
 	Domain, Target   string

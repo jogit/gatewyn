@@ -27,6 +27,9 @@ services:
       # Key of the CrowdSec bouncer, created by CrowdSec itself (empty without the crowdsec profile).
       - crowdsec_bouncer_key:/run/crowdsec-bouncer:ro
     environment:
+      # Time zone of the server (backup time, dates): the image has no zone files of its own, so
+      # without this everything is in UTC. Set yours, for example TZ=Europe/Paris in your .env file.
+      TZ: ${TZ:-UTC}
       # Public address(es) of this machine, used to check the DNS of your domains.
       GATEWYN_PUBLIC_IP: ${GATEWYN_PUBLIC_IP:-}
       GATEWYN_CROWDSEC_KEY_FILE: /run/crowdsec-bouncer/key

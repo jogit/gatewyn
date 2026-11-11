@@ -43,7 +43,7 @@ L'interface explique chaque étape (pages Protection et Statistiques). Avec le p
 
 ## Mise à jour
 
-Gatewyn ne se met jamais à jour seul et ne cherche pas de nouvelle version. Pour mettre à jour, changez l'étiquette de l'image dans votre compose (voir les [versions publiées](https://github.com/jogit/gatewyn/releases)) et redéployez. Vos données restent dans les volumes, et la base est copiée avant chaque migration. Pour revenir en arrière, redéployez l'étiquette précédente.
+Gatewyn ne se met jamais à jour seul et ne cherche pas de nouvelle version. Pour mettre à jour, changez l'étiquette de l'image dans votre compose (voir les [versions publiées](https://github.com/jogit/gatewyn/releases)) et redéployez. Vos données restent dans les volumes, et la base est copiée avant chaque migration. Pour revenir en arrière, redéployez l'étiquette précédente. Les Réglages gardent une copie de sauvegarde par jour (à l'heure choisie, heure du serveur : réglez `TZ` dans le compose ; 7 jours par défaut, sur le même disque) et proposent de la télécharger (base et clé de chiffrement, à garder en lieu privé) ou de restaurer. Sauvegardez le volume de données ailleurs avec votre propre outil.
 
 ## Développer
 

@@ -36,6 +36,7 @@ What exists, and why. Outdated decisions are replaced, not kept as history.
 - Caddy upgrades are manual (see [AGENTS.md](../AGENTS.md)).
 - Container health: the image carries a `HEALTHCHECK` (`gatewyn healthcheck`, which reads `/healthz`: database and Caddy's admin API answer), so a stack manager shows the real state.
 - Gatewyn is updated from outside (`docker compose pull`). SQLite migrations are versioned, with a copy of the database before each one (`<db>.avant-vN-<date>`).
+- Backup (Settings): once a day at a chosen hour (server time, set with `TZ`; zone data is embedded in the binary; a missed hour is caught up at start; on by default, 7 days kept, 3 to 30 or off) Gatewyn writes the same archive to `<data>/backups/` and prunes older ones; the copies sit on the same disk, so they protect against a mistake, not against losing the volume (back the volume up elsewhere with your own tool). Manual download and restore are also there. The archive is a tar.gz of the database (`VACUUM INTO`) and the encryption key, which are useless apart. It holds secrets and is not encrypted: the page says so. Restoring validates the archive (integrity, schema version not newer than this build), stages it next to the database and stops Gatewyn; the next start installs it before opening the database and keeps the replaced files as `*.avant-restauration-<date>`. The container must restart on exit (`restart: unless-stopped` does). Unit-tested (`internal/backup`, `internal/web/backup_test.go`); not tried against a real container restart.
 
 ## Security
 

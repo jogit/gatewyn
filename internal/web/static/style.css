@@ -480,3 +480,20 @@ td.bars, th.bars { width: 38%; }
 #host-note:empty { display: none; }
 #host-note .note { margin-bottom: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 #host-note .btn { margin-left: auto; }
+
+/* Réglages : sections avec leurs propres formulaires (sauvegarde) */
+.sub-form { display: grid; gap: 12px; }
+.btn-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Réglages : chaque carte garde sa propre barre d'enregistrement (pas de barre fixe en bas du mobile) */
+.settings .publish-main .actions { position: static; backdrop-filter: none; background: none; }
+@media (max-width: 760px) {
+  .page-content:has(.settings) { padding-bottom: 100px; }
+  .settings .publish-main .actions { position: static; margin: 0 -14px; padding: 10px 14px; border-width: 1px 0 0; background: none; }
+}
+/* Liste des copies de sauvegarde : une ligne par copie */
+.copies { display: grid; list-style: none; margin: 0; padding: 0; }
+.copies li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.copies li:first-child { border-top: 0; }
+.copies small { margin-left: 6px; color: var(--muted); }
+.copies-more > summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 6px 0; }

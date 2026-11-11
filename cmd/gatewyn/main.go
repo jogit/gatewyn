@@ -29,9 +29,11 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	_ "time/tzdata" // fuseaux horaires intégrés : l'image n'en a pas, et TZ doit fonctionner
 
 	"github.com/jogit/gatewyn/internal/acmelog"
 	"github.com/jogit/gatewyn/internal/auth"
+	"github.com/jogit/gatewyn/internal/backup"
 	"github.com/jogit/gatewyn/internal/caddyadmin"
 	"github.com/jogit/gatewyn/internal/caddyproc"
 	"github.com/jogit/gatewyn/internal/secrets"
@@ -138,17 +140,27 @@ func run(log *slog.Logger) error {
 		}
 	}
 
+	keyFile := env("GATEWYN_KEY_FILE", filepath.Join(filepath.Dir(dbPath), "secret.key"))
+	// Une sauvegarde restaurée depuis l'interface est installée ici, avant d'ouvrir la base.
+	if applied, err := backup.Apply(dbPath, keyFile, time.Now()); err != nil {
+		return fmt.Errorf("installation de la sauvegarde restaurée : %w", err)
+	} else if applied {
+		log.Info("restored backup installed; the previous database and key were kept next to them")
+	}
+
 	st, err := store.Open(dbPath)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
 
-	box, err := secrets.Open(env("GATEWYN_KEY_FILE", filepath.Join(filepath.Dir(dbPath), "secret.key")))
+	box, err := secrets.Open(keyFile)
 	if err != nil {
 		return err
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	caddy := caddyadmin.New(caddyURL)
 	certs := acmelog.New() // échecs de certificat lus dans les journaux de Caddy
 	srv, err := web.New(web.Config{
@@ -161,6 +173,9 @@ func run(log *slog.Logger) error {
 		GoAccessURL:     env("GATEWYN_GOACCESS_URL", ""),
 		CrowdSecKeyFile: env("GATEWYN_CROWDSEC_KEY_FILE", ""),
 		Secrets:         box,
+		DBPath:          dbPath,
+		KeyFile:         keyFile,
+		Restart:         stop,
 		Logger:          log,
 	})
 	if err != nil {
@@ -192,8 +207,7 @@ func run(log *slog.Logger) error {
 		}
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
+	go srv.RunAutoBackups(ctx)
 	caddyDone := make(chan struct{})
 	if bin := env("GATEWYN_CADDY_BIN", ""); bin != "" {
 		go func() { caddyproc.Run(ctx, bin, publish, log, certs.Wrap(os.Stderr)); close(caddyDone) }()
