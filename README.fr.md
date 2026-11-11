@@ -6,7 +6,7 @@ Interface web simple pour publier des services en HTTPS, par-dessus Caddy.
 
 Site et vidéo de démonstration : <https://jogit.github.io/gatewyn/fr.html>
 
-État : publiée et utilisée. L'image est publiée sur GitHub Container Registry (`ghcr.io/jogit/gatewyn`, une étiquette par version, jamais `latest`). Les règles de travail sont dans [AGENTS.md](AGENTS.md) (en anglais), les décisions et leurs raisons dans [docs/architecture.md](docs/architecture.md) (en anglais).
+État : publiée et utilisée. L'image est publiée sur GitHub Container Registry (`ghcr.io/jogit/gatewyn`) et Docker Hub (`gatewyn/gatewyn`), une étiquette par version, jamais `latest`. Les règles de travail sont dans [AGENTS.md](AGENTS.md) (en anglais), les décisions et leurs raisons dans [docs/architecture.md](docs/architecture.md) (en anglais).
 
 ## Idée
 
