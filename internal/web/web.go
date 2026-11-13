@@ -522,7 +522,7 @@ func (s *Server) hostsList(w http.ResponseWriter, r *http.Request, kind string) 
 		s.renderFragment(w, "hosts", "list", p)
 		return
 	}
-	s.fillStrip(ctx, &p)
+	s.fillStrip(ctx, &p, hosts)
 	q := r.URL.Query()
 	switch {
 	case q.Get("added") != "":

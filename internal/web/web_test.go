@@ -1186,12 +1186,17 @@ func TestDashboardTilesAndWatchList(t *testing.T) {
 		der, _ := x509.CreateCertificate(rand.Reader, tpl, tpl, &key.PublicKey, key)
 		os.WriteFile(filepath.Join(d, name+".crt"), pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), 0o644)
 	}
+	// Un certificat expiré resté sur le disque, sans hôte, n'est ni une alerte ni une couleur rouge.
+	writeFakeCert(t, dir, "orphelin.example.com", now, -30*24*time.Hour)
+	for _, d := range []string{"ok.example.com", "bientot.example.com"} {
+		e.post("/hosts", url.Values{"domain": {d}, "target": {"192.0.2.9:8080"}})
+	}
 	_, body = e.do("GET", "/", nil)
-	if !strings.Contains(body, "<strong>2</strong>") || !strings.Contains(body, "prochaine échéance dans 8 j") {
+	if !strings.Contains(body, "<strong>3</strong>") || !strings.Contains(body, "prochaine échéance dans 8 j") || strings.Contains(body, "status-cell err") {
 		t.Errorf("case Certificats : %s", body)
 	}
 	_, frag := e.do("GET", "/dashboard/online", nil)
-	if !strings.Contains(frag, "Le certificat de bientot.example.com expire dans 8 j.") || strings.Contains(frag, "ok.example.com") {
+	if !strings.Contains(frag, "<b>bientot.example.com</b> Le certificat expire dans 8 j.") || strings.Contains(frag, "ok.example.com") || strings.Contains(frag, "orphelin.example.com") {
 		t.Errorf("certificat à surveiller : %s", frag)
 	}
 
@@ -2534,7 +2539,7 @@ func TestCertificateFailuresFromCaddyLogsAreExplained(t *testing.T) {
 		t.Errorf("liste des hôtes : %s", body)
 	}
 	_, frag := e.do("GET", "/dashboard/online", nil)
-	if !strings.Contains(frag, `<span class="pill err">Certificat</span>`) || !strings.Contains(frag, "wiki.example.com : Let&#39;s Encrypt") || strings.Contains(frag, "lan.example.com") {
+	if !strings.Contains(frag, `<span class="pill err">Certificat</span>`) || !strings.Contains(frag, "<b>wiki.example.com</b> Let&#39;s Encrypt") || strings.Contains(frag, "lan.example.com") {
 		t.Errorf("à surveiller : %s", frag)
 	}
 
@@ -2994,5 +2999,21 @@ func TestEnglishHostsHomeHasNoMixedLanguage(t *testing.T) {
 	_, edit := e.do("GET", "/hosts/"+itoa(hosts[0].ID)+"/edit", nil, "Accept-Language", "en")
 	if !strings.Contains(edit, ">None<") || strings.Contains(edit, ">Aucune<") {
 		t.Errorf("la case Protection doit être traduite : %s", edit)
+	}
+}
+
+func TestExpiredCertOfHTTPOnlyHostIsNotAnAlert(t *testing.T) {
+	e := newEnv(t)
+	e.setup()
+	dir := t.TempDir()
+	e.srv.cfg.CertDir = dir
+	writeFakeCert(t, dir, "ancien.example.com", e.srv.cfg.Now(), -30*24*time.Hour)
+	e.post("/hosts", url.Values{"domain": {"ancien.example.com"}, "target": {"192.0.2.9:8080"}, "dns": {"http"}, "force": {"1"}})
+	_, frag := e.do("GET", "/dashboard/online", nil)
+	if strings.Contains(frag, "Expiré") || strings.Contains(frag, "ancien.example.com") {
+		t.Errorf("un hôte repassé en HTTP ne doit pas alerter : %s", frag)
+	}
+	if _, body := e.do("GET", "/", nil); strings.Contains(body, "status-cell err") {
+		t.Error("la tuile Certificats ne doit pas être rouge")
 	}
 }

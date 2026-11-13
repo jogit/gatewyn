@@ -58,7 +58,7 @@ func ago(now, t time.Time) string {
 
 // watchItem est une ligne de « À surveiller ».
 type watchItem struct {
-	Class, Label, Text, Href string
+	Class, Label, Domain, Text, Href string
 }
 
 // csTile est l'état de la case Protection, connu après un appel à CrowdSec.
@@ -96,16 +96,18 @@ func (d dashOnline) MoreLabel() string {
 
 // fillStrip remplit la bande d'état de la liste des hôtes : certificats, trafic, protection.
 // Les cases qui demandent un appel réseau (services en ligne, CrowdSec) sont chargées après coup.
-func (s *Server) fillStrip(ctx context.Context, p *page) {
+func (s *Server) fillStrip(ctx context.Context, p *page, hosts []store.Host) {
 	// Certificats : nombre et prochaine échéance, lus sur le disque.
 	if p.CertsReadable = s.cfg.CertDir != ""; p.CertsReadable {
 		list, _ := certs.List(s.cfg.CertDir)
 		now := s.cfg.Now()
 		p.CertCount = len(list)
+		// L'échéance et la couleur ne concernent que les certificats des hôtes publiés : un
+		// vieux certificat resté sur le disque après la suppression d'un hôte n'est pas un problème.
 		var next time.Time
-		for _, c := range list {
-			if next.IsZero() || c.Expires.Before(next) {
-				next = c.Expires
+		for _, hc := range s.hostCerts(hosts) {
+			if next.IsZero() || hc.cert.Expires.Before(next) {
+				next = hc.cert.Expires
 			}
 		}
 		if !next.IsZero() {
@@ -141,7 +143,7 @@ func (s *Server) dashboardOnline(w http.ResponseWriter, r *http.Request) {
 		}
 		d.Total++
 		wg.Add(1)
-		go func(domain, target string, skip bool) {
+		go func(id int64, domain, target string, skip bool) {
 			defer wg.Done()
 			res := s.cfg.CheckTarget(ctx, target, skip)
 			mu.Lock()
@@ -150,8 +152,8 @@ func (s *Server) dashboardOnline(w http.ResponseWriter, r *http.Request) {
 				d.Online++
 				return
 			}
-			d.Watch = append(d.Watch, watchItem{Class: "err", Label: "Injoignable", Text: domain + " : " + res.Message, Href: "/hosts"})
-		}(h.Domain, h.Target, h.TLSSkipVerify)
+			d.Watch = append(d.Watch, watchItem{Class: "err", Label: "Injoignable", Domain: domain, Text: res.Message, Href: hostEditPath(id)})
+		}(h.ID, h.Domain, h.Target, h.TLSSkipVerify)
 	}
 	wg.Add(1)
 	go func() { // CrowdSec
@@ -175,35 +177,53 @@ func (s *Server) dashboardOnline(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 	d.Failed = d.Total - d.Online
 	// Les hôtes en erreur d'abord, dans un ordre stable.
-	sort.Slice(d.Watch, func(i, j int) bool { return d.Watch[i].Text < d.Watch[j].Text }) // ordre stable
+	sort.Slice(d.Watch, func(i, j int) bool { return d.Watch[i].Domain < d.Watch[j].Domain }) // ordre stable
 	for _, h := range hosts {
 		if msg := s.certProblem(h); msg != "" {
-			d.Watch = append(d.Watch, watchItem{Class: "err", Label: "Certificat", Text: h.Domain + " : " + msg, Href: "/hosts"})
+			d.Watch = append(d.Watch, watchItem{Class: "err", Label: "Certificat", Domain: h.Domain, Text: msg, Href: hostEditPath(h.ID)})
 		}
 	}
-	d.Watch = append(d.Watch, s.expiringCerts()...)
+	d.Watch = append(d.Watch, s.expiringCerts(hosts)...)
 	s.renderFragment(w, "hosts", "online", d)
 }
 
-// expiringCerts signale les certificats qui expirent sous 14 jours, ou qui ont expiré.
-func (s *Server) expiringCerts() []watchItem {
-	if s.cfg.CertDir == "" {
-		return nil
+func hostEditPath(id int64) string { return fmt.Sprintf("/hosts/%d/edit", id) }
+
+type hostCert struct {
+	host store.Host
+	cert certs.Cert
+}
+
+// hostCerts associe chaque hôte actif en HTTPS au certificat qui le sert, s'il existe.
+func (s *Server) hostCerts(hosts []store.Host) []hostCert {
+	byName := s.certsByName()
+	var out []hostCert
+	for _, h := range hosts {
+		if h.Disabled || h.HTTPOnly || h.SelfSigned {
+			continue
+		}
+		if c, ok := certFor(byName, h.Domain); ok {
+			out = append(out, hostCert{h, c})
+		}
 	}
-	list, _ := certs.List(s.cfg.CertDir)
+	return out
+}
+
+// expiringCerts signale les certificats des hôtes publiés qui expirent sous 14 jours, ou qui ont expiré.
+func (s *Server) expiringCerts(hosts []store.Host) []watchItem {
 	now := s.cfg.Now()
 	var out []watchItem
-	for _, c := range list {
-		class := expiryClass(now, c.Expires)
+	for _, hc := range s.hostCerts(hosts) {
+		class := expiryClass(now, hc.cert.Expires)
 		if class == "ok" {
 			continue
 		}
-		text := fmt.Sprintf("Le certificat de %s expire dans %s.", c.Domain, daysLeft(now, c.Expires))
+		text := fmt.Sprintf("Le certificat expire dans %s.", daysLeft(now, hc.cert.Expires))
 		label := "Expire bientôt"
 		if class == "err" {
-			text, label = fmt.Sprintf("Le certificat de %s a expiré.", c.Domain), "Expiré"
+			text, label = "Le certificat a expiré.", "Expiré"
 		}
-		out = append(out, watchItem{Class: class, Label: label, Text: text, Href: "/certificates"})
+		out = append(out, watchItem{Class: class, Label: label, Domain: hc.host.Domain, Text: text, Href: hostEditPath(hc.host.ID)})
 	}
 	return out
 }
