@@ -12,7 +12,7 @@ RUN CGO_ENABLED=0 xcaddy build \
     --with github.com/caddy-dns/cloudflare@v0.2.4 \
     --with github.com/caddy-dns/ovh@v1.1.0 \
     --with github.com/caddy-dns/gandi@v1.2.1 \
-    --with github.com/caddy-dns/route53@v1.6.2 \
+    --with github.com/caddy-dns/route53@v1.6.3 \
     --with github.com/caddy-dns/digitalocean@v0.0.0-20250606074528-04bde2867106 \
     --with github.com/caddy-dns/hetzner/v2@v2.0.1 \
     --with github.com/caddy-dns/infomaniak@v1.0.2 \
