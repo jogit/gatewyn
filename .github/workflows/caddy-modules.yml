@@ -1,0 +1,43 @@
+# Dependabot cannot read the modules passed to xcaddy in the Dockerfile.
+# This job compares them with the latest published versions and keeps one issue up to date.
+name: Caddy modules
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Compare xcaddy modules with their latest version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          report=""
+          while read -r spec; do
+            mod="${spec%@*}"; cur="${spec#*@}"
+            # A sub-module released with the repository's tags (crowdsec bouncer /http) has no tag of its own.
+            latest="$(cd "$(mktemp -d)" && { go list -m -f '{{.Version}}' "${mod}@latest" 2>/dev/null || go list -m -f '{{.Version}}' "${mod%/http}@latest"; })"
+            if [ "$cur" != "$latest" ]; then
+              report="${report}- \`${mod}\`: ${cur} -> ${latest}"$'\n'
+            fi
+          done < <(grep -oE -- '--with [^ ]+' Dockerfile | cut -d' ' -f2)
+          title="Caddy modules: updates available"
+          num="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')"
+          if [ -z "$report" ]; then
+            [ -n "$num" ] && gh issue close "$num" --comment "All modules are up to date."
+            exit 0
+          fi
+          body="Modules built into the Caddy image (Dockerfile, xcaddy) with a newer version:"$'\n\n'"${report}"$'\n'"Updating means a new image version: validate the existing configuration first."
+          if [ -n "$num" ]; then gh issue edit "$num" --body "$body"; else gh issue create --title "$title" --body "$body"; fi

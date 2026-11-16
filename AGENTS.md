@@ -31,6 +31,7 @@ A simple web interface to publish services over HTTPS, driving Caddy. Everything
 - No automatic update. Companion applications are updated by the user.
 - No Versions page and no outside call to look for new versions: Gatewyn calls no outside service on its own. Updates are decided by the user, from the project's releases and the compose file.
 - Caddy upgrades are manual: validate the existing configuration with the new version before switching, and keep the old image for rollback.
+- Caddy modules built by xcaddy (Dockerfile) are invisible to Dependabot: the weekly workflow `caddy-modules.yml` opens one issue listing the outdated ones. Bumping them stays manual.
 - SQLite: versioned migrations, automatic copy of the database before each migration. Application data lives in volumes separate from images.
 
 ## Development
